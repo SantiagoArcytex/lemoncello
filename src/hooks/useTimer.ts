@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { TimerBlock, TimerState, TimerSession } from '@/types/blocks';
 import { useLocalStorage } from './useLocalStorage';
 
-const generateId = () => Math.random().toString(36).substring(2, 15);
+const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
 export function useTimer() {
   const [sessions, setSessions] = useLocalStorage<TimerSession[]>('lemoncello-sessions', []);
