@@ -18,11 +18,16 @@ export function useTimer() {
   });
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const startAudioRef = useRef<HTMLAudioElement | null>(null);
+  const endAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    audioRef.current.volume = 0.5;
+    // Use local sounds for offline support
+    startAudioRef.current = new Audio('/sounds/start.mp3');
+    startAudioRef.current.volume = 0.6;
+    
+    endAudioRef.current = new Audio('/sounds/end.mp3');
+    endAudioRef.current.volume = 0.6;
     
     return () => {
       if (intervalRef.current) {
@@ -31,19 +36,37 @@ export function useTimer() {
     };
   }, []);
 
-  const playNotificationSound = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+  const playStartSound = useCallback(() => {
+    if (startAudioRef.current) {
+      startAudioRef.current.currentTime = 0;
+      startAudioRef.current.play().catch(() => {});
     }
   }, []);
 
-  const sendNotification = useCallback((title: string, body: string) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/favicon.ico' });
+  const playEndSound = useCallback(() => {
+    if (endAudioRef.current) {
+      endAudioRef.current.currentTime = 0;
+      endAudioRef.current.play().catch(() => {});
     }
-    playNotificationSound();
-  }, [playNotificationSound]);
+  }, []);
+
+  const sendNotification = useCallback((title: string, body: string, isStart = false) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { 
+        body, 
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: 'lemoncello-timer',
+        requireInteraction: true,
+      });
+    }
+    
+    if (isStart) {
+      playStartSound();
+    } else {
+      playEndSound();
+    }
+  }, [playStartSound, playEndSound]);
 
   const requestNotificationPermission = useCallback(async () => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -79,6 +102,9 @@ export function useTimer() {
       ? block.restDuration * 60 
       : block.workDuration * 60;
 
+    // Play start sound and send notification
+    sendNotification('Timer Started! 🚀', `${block.name} - Let's go!`, true);
+
     setTimerState({
       isRunning: true,
       isPaused: false,
@@ -89,15 +115,16 @@ export function useTimer() {
       workDescription: '',
       sessionStartTime: new Date(),
     });
-  }, [requestNotificationPermission]);
+  }, [requestNotificationPermission, sendNotification]);
 
   const pauseTimer = useCallback(() => {
     setTimerState(prev => ({ ...prev, isPaused: true, isRunning: false }));
   }, []);
 
   const resumeTimer = useCallback(() => {
+    playStartSound();
     setTimerState(prev => ({ ...prev, isPaused: false, isRunning: true }));
-  }, []);
+  }, [playStartSound]);
 
   const stopTimer = useCallback(() => {
     if (timerState.currentBlock && timerState.sessionStartTime) {
@@ -171,7 +198,7 @@ export function useTimer() {
             timeRemaining: block.restDuration * 60,
           };
         } else {
-          sendNotification('Back to Work! 💪', `Starting cycle ${prev.currentCycle + 1} of ${block.cycles}.`);
+          sendNotification('Back to Work! 💪', `Starting cycle ${prev.currentCycle + 1} of ${block.cycles}.`, true);
           return {
             ...prev,
             isWorkPhase: true,
