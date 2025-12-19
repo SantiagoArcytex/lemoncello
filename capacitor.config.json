@@ -1,0 +1,9 @@
+{
+  "appId": "app.lovable.4c453a08debf4655ab3c5689cf247ea8",
+  "appName": "Lemoncello",
+  "webDir": "dist",
+  "server": {
+    "url": "https://4c453a08-debf-4655-ab3c-5689cf247ea8.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  }
+}
