@@ -15,6 +15,8 @@ export function useTimer() {
     timeRemaining: 0,
     workDescription: '',
     sessionStartTime: null,
+    currentTaskId: undefined,
+    currentTaskName: undefined,
   });
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -22,7 +24,6 @@ export function useTimer() {
   const endAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Use local sounds for offline support
     startAudioRef.current = new Audio('/sounds/start.mp3');
     startAudioRef.current.volume = 0.6;
     
@@ -74,11 +75,21 @@ export function useTimer() {
     }
   }, []);
 
-  const completeSession = useCallback((block: TimerBlock, description: string, startTime: Date) => {
+  const completeSession = useCallback((
+    block: TimerBlock, 
+    description: string, 
+    startTime: Date,
+    stoppedByUser: boolean = false,
+    timeCompletedBeforeStopping?: number
+  ) => {
     const now = new Date();
-    const totalWorkMinutes = block.type === 'rest' 
-      ? 0 
+    const expectedDuration = block.type === 'rest' 
+      ? block.restDuration 
       : block.workDuration * block.cycles;
+    
+    const totalWorkMinutes = stoppedByUser && timeCompletedBeforeStopping !== undefined
+      ? timeCompletedBeforeStopping
+      : (block.type === 'rest' ? 0 : block.workDuration * block.cycles);
 
     const session: TimerSession = {
       id: generateId(),
@@ -88,21 +99,25 @@ export function useTimer() {
       endTime: now,
       totalWorkMinutes,
       workDescription: description,
-      completed: true,
+      completed: !stoppedByUser,
+      stoppedByUser,
+      timeCompletedBeforeStopping: stoppedByUser ? timeCompletedBeforeStopping : undefined,
+      expectedDuration,
       date: now.toISOString().split('T')[0],
+      taskId: timerState.currentTaskId,
+      taskName: timerState.currentTaskName,
     };
 
     setSessions(prev => [...prev, session]);
-  }, [setSessions]);
+  }, [setSessions, timerState.currentTaskId, timerState.currentTaskName]);
 
-  const startBlock = useCallback((block: TimerBlock) => {
+  const startBlock = useCallback((block: TimerBlock, taskId?: string, taskName?: string) => {
     requestNotificationPermission();
     
     const initialTime = block.type === 'rest' 
       ? block.restDuration * 60 
       : block.workDuration * 60;
 
-    // Play start sound and send notification
     sendNotification('Timer Started! 🚀', `${block.name} - Let's go!`, true);
 
     setTimerState({
@@ -114,6 +129,8 @@ export function useTimer() {
       timeRemaining: initialTime,
       workDescription: '',
       sessionStartTime: new Date(),
+      currentTaskId: taskId,
+      currentTaskName: taskName,
     });
   }, [requestNotificationPermission, sendNotification]);
 
@@ -128,10 +145,20 @@ export function useTimer() {
 
   const stopTimer = useCallback(() => {
     if (timerState.currentBlock && timerState.sessionStartTime) {
+      const block = timerState.currentBlock;
+      const expectedTotalSeconds = block.type === 'rest'
+        ? block.restDuration * 60
+        : block.workDuration * 60 * block.cycles + block.restDuration * 60 * (block.cycles - 1);
+      
+      const elapsedSeconds = expectedTotalSeconds - timerState.timeRemaining;
+      const timeCompletedMinutes = Math.floor(elapsedSeconds / 60);
+      
       completeSession(
         timerState.currentBlock,
         timerState.workDescription,
-        timerState.sessionStartTime
+        timerState.sessionStartTime,
+        true,
+        timeCompletedMinutes
       );
     }
     
@@ -144,6 +171,8 @@ export function useTimer() {
       timeRemaining: 0,
       workDescription: '',
       sessionStartTime: null,
+      currentTaskId: undefined,
+      currentTaskName: undefined,
     });
   }, [timerState, completeSession]);
 
@@ -165,7 +194,7 @@ export function useTimer() {
         if (block.type === 'meeting' || block.type === 'rest') {
           sendNotification('Timer Complete! ✨', `${block.name} has finished.`);
           if (prev.sessionStartTime) {
-            completeSession(block, prev.workDescription, prev.sessionStartTime);
+            completeSession(block, prev.workDescription, prev.sessionStartTime, false);
           }
           return {
             ...prev,
@@ -173,6 +202,8 @@ export function useTimer() {
             isPaused: false,
             currentBlock: null,
             timeRemaining: 0,
+            currentTaskId: undefined,
+            currentTaskName: undefined,
           };
         }
 
@@ -180,7 +211,7 @@ export function useTimer() {
           if (prev.currentCycle >= block.cycles) {
             sendNotification('Block Complete! 🎉', `${block.name} - All cycles finished!`);
             if (prev.sessionStartTime) {
-              completeSession(block, prev.workDescription, prev.sessionStartTime);
+              completeSession(block, prev.workDescription, prev.sessionStartTime, false);
             }
             return {
               ...prev,
@@ -188,6 +219,8 @@ export function useTimer() {
               isPaused: false,
               currentBlock: null,
               timeRemaining: 0,
+              currentTaskId: undefined,
+              currentTaskName: undefined,
             };
           }
           
@@ -236,6 +269,14 @@ export function useTimer() {
     return sessions.filter(s => s.date === date);
   }, [sessions]);
 
+  const getSessionsByTask = useCallback((taskId: string) => {
+    return sessions.filter(s => s.taskId === taskId);
+  }, [sessions]);
+
+  const hasIncompleteSprint = useCallback((taskId: string) => {
+    return sessions.some(s => s.taskId === taskId && s.stoppedByUser);
+  }, [sessions]);
+
   const clearSessions = useCallback(() => {
     setSessions([]);
   }, [setSessions]);
@@ -250,6 +291,8 @@ export function useTimer() {
     updateWorkDescription,
     getTodaySessions,
     getSessionsByDate,
+    getSessionsByTask,
+    hasIncompleteSprint,
     clearSessions,
   };
 }

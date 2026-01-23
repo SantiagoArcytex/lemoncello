@@ -7,6 +7,7 @@ import { ReportsView } from '@/components/ReportsView';
 import { BottomNav } from '@/components/BottomNav';
 import { useBlocks } from '@/hooks/useBlocks';
 import { useTimer } from '@/hooks/useTimer';
+import { useTasks } from '@/hooks/useTasks';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'timer' | 'reports'>('timer');
@@ -21,8 +22,16 @@ const Index = () => {
     stopTimer,
     updateWorkDescription,
     getTodaySessions,
+    hasIncompleteSprint,
     clearSessions,
   } = useTimer();
+  
+  const {
+    tasks,
+    addTask,
+    completeTask,
+    deleteTask,
+  } = useTasks();
 
   const todayMinutes = useMemo(() => {
     return getTodaySessions().reduce((sum, s) => sum + s.totalWorkMinutes, 0);
@@ -70,6 +79,11 @@ const Index = () => {
                   onDeleteBlock={deleteBlock}
                   onCreateBlock={addBlock}
                   todayMinutes={todayMinutes}
+                  tasks={tasks}
+                  onAddTask={addTask}
+                  onCompleteTask={completeTask}
+                  onDeleteTask={deleteTask}
+                  hasIncompleteSprint={hasIncompleteSprint}
                 />
               </motion.div>
             )
@@ -80,7 +94,7 @@ const Index = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <ReportsView sessions={sessions} onClearSessions={clearSessions} />
+              <ReportsView sessions={sessions} tasks={tasks} onClearSessions={clearSessions} />
             </motion.div>
           )}
         </AnimatePresence>
