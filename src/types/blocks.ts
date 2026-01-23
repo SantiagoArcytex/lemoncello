@@ -21,7 +21,21 @@ export interface TimerSession {
   totalWorkMinutes: number;
   workDescription: string;
   completed: boolean;
+  stoppedByUser: boolean;
+  timeCompletedBeforeStopping?: number; // in minutes
+  expectedDuration?: number; // in minutes
   date: string; // YYYY-MM-DD format
+  taskId?: string; // Link to task
+  taskName?: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: Date;
+  completedAt?: Date;
+  isCompleted: boolean;
 }
 
 export interface TimerState {
@@ -33,6 +47,8 @@ export interface TimerState {
   timeRemaining: number; // in seconds
   workDescription: string;
   sessionStartTime: Date | null;
+  currentTaskId?: string;
+  currentTaskName?: string;
 }
 
 export const DEFAULT_BLOCKS: Omit<TimerBlock, 'id' | 'createdAt'>[] = [
@@ -41,7 +57,7 @@ export const DEFAULT_BLOCKS: Omit<TimerBlock, 'id' | 'createdAt'>[] = [
     type: 'pomodoro',
     workDuration: 25,
     restDuration: 5,
-    cycles: 4,
+    cycles: 1,
     icon: '🎯',
   },
   {
@@ -49,23 +65,31 @@ export const DEFAULT_BLOCKS: Omit<TimerBlock, 'id' | 'createdAt'>[] = [
     type: 'pomodoro',
     workDuration: 50,
     restDuration: 10,
-    cycles: 2,
+    cycles: 1,
     icon: '🧠',
   },
   {
-    name: 'Quick Meeting',
-    type: 'meeting',
-    workDuration: 30,
-    restDuration: 0,
+    name: 'Immersive Work',
+    type: 'pomodoro',
+    workDuration: 50,
+    restDuration: 10,
+    cycles: 2,
+    icon: '🚀',
+  },
+  {
+    name: 'Rest',
+    type: 'rest',
+    workDuration: 0,
+    restDuration: 15,
     cycles: 1,
-    icon: '📞',
+    icon: '☕',
   },
   {
     name: 'Long Rest',
     type: 'rest',
     workDuration: 0,
-    restDuration: 40,
+    restDuration: 30,
     cycles: 1,
-    icon: '☕',
+    icon: '🌿',
   },
 ];

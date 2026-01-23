@@ -1,18 +1,24 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Phone, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Plus, ClipboardList, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BlockCard } from './BlockCard';
 import { CreateBlockModal } from './CreateBlockModal';
-import { TimerBlock } from '@/types/blocks';
+import { TaskPanel } from './TaskPanel';
+import { TimerBlock, Task } from '@/types/blocks';
 
 interface BlockLibraryProps {
   blocks: TimerBlock[];
-  onStartBlock: (block: TimerBlock) => void;
+  onStartBlock: (block: TimerBlock, taskId?: string, taskName?: string) => void;
   onUpdateBlock: (id: string, updates: Partial<TimerBlock>) => void;
   onDeleteBlock: (id: string) => void;
   onCreateBlock: (block: Omit<TimerBlock, 'id' | 'createdAt'>) => void;
   todayMinutes: number;
+  tasks: Task[];
+  onAddTask: (title: string, description: string) => void;
+  onCompleteTask: (id: string) => void;
+  onDeleteTask: (id: string) => void;
+  hasIncompleteSprint: (taskId: string) => boolean;
 }
 
 export function BlockLibrary({
@@ -22,21 +28,17 @@ export function BlockLibrary({
   onDeleteBlock,
   onCreateBlock,
   todayMinutes,
+  tasks,
+  onAddTask,
+  onCompleteTask,
+  onDeleteTask,
+  hasIncompleteSprint,
 }: BlockLibraryProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isTaskPanelOpen, setIsTaskPanelOpen] = useState(false);
 
-  const handleQuickMeeting = () => {
-    const meetingBlock: TimerBlock = {
-      id: 'quick-meeting-' + Date.now(),
-      name: 'Quick Meeting',
-      type: 'meeting',
-      workDuration: 30,
-      restDuration: 0,
-      cycles: 1,
-      icon: '📞',
-      createdAt: new Date(),
-    };
-    onStartBlock(meetingBlock);
+  const handleStartSprintFromTask = (task: Task, block: TimerBlock) => {
+    onStartBlock(block, task.id, task.title);
   };
 
   return (
@@ -85,11 +87,11 @@ export function BlockLibrary({
           <Button
             variant="outline"
             size="lg"
-            onClick={handleQuickMeeting}
+            onClick={() => setIsTaskPanelOpen(true)}
             className="flex-1"
           >
-            <Phone className="h-4 w-4 mr-2" />
-            30min Meeting
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Tasks
           </Button>
           <Button
             size="lg"
@@ -145,6 +147,18 @@ export function BlockLibrary({
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreateBlock={onCreateBlock}
+      />
+
+      <TaskPanel
+        isOpen={isTaskPanelOpen}
+        onClose={() => setIsTaskPanelOpen(false)}
+        tasks={tasks}
+        onAddTask={onAddTask}
+        onCompleteTask={onCompleteTask}
+        onDeleteTask={onDeleteTask}
+        onStartSprint={handleStartSprintFromTask}
+        blocks={blocks}
+        hasIncompleteSprint={hasIncompleteSprint}
       />
     </div>
   );
