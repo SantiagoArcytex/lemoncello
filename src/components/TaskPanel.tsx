@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, CheckCircle2, Play, MoreVertical, Trash2 } from 'lucide-react';
+import { Plus, X, CheckCircle2, Play, MoreVertical, Trash2, ChevronLeft, Archive, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +26,7 @@ interface TaskPanelProps {
   onAddTask: (title: string, description: string) => void;
   onCompleteTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
+  onUncompleteTask: (id: string) => void;
   onStartSprint: (task: Task, block: TimerBlock) => void;
   blocks: TimerBlock[];
   hasIncompleteSprint: (taskId: string) => boolean;
@@ -38,6 +39,7 @@ export function TaskPanel({
   onAddTask,
   onCompleteTask,
   onDeleteTask,
+  onUncompleteTask,
   onStartSprint,
   blocks,
   hasIncompleteSprint,
@@ -46,8 +48,10 @@ export function TaskPanel({
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showTimerSelect, setShowTimerSelect] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const activeTasks = tasks.filter(t => !t.isCompleted);
+  const completedTasks = tasks.filter(t => t.isCompleted);
   const workBlocks = blocks.filter(b => b.type === 'pomodoro');
 
   const handleAddTask = () => {
@@ -59,6 +63,7 @@ export function TaskPanel({
   };
 
   const handleTaskClick = (task: Task) => {
+    if (task.isCompleted) return;
     setSelectedTask(task);
     setShowTimerSelect(true);
   };
@@ -77,29 +82,42 @@ export function TaskPanel({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
-            onClick={onClose}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed inset-0 z-40 bg-background flex flex-col"
           >
-            <motion.div
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-lg bg-background rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <h2 className="text-xl font-bold text-foreground">Tasks</h2>
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
+            {/* Header */}
+            <div className="flex items-center gap-3 p-4 border-b border-border">
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <h2 className="text-xl font-bold text-foreground flex-1">
+                {showCompleted ? 'Completed Tasks' : 'Tasks'}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="gap-2"
+              >
+                {showCompleted ? (
+                  <>
+                    <RotateCcw className="h-4 w-4" />
+                    Active
+                  </>
+                ) : (
+                  <>
+                    <Archive className="h-4 w-4" />
+                    Completed ({completedTasks.length})
+                  </>
+                )}
+              </Button>
+            </div>
 
-              {/* Add Task Form */}
+            {/* Add Task Form - only show on active tasks view */}
+            {!showCompleted && (
               <div className="p-4 border-b border-border space-y-3">
                 <Input
                   placeholder="Task title..."
@@ -123,32 +141,31 @@ export function TaskPanel({
                   Add Task
                 </Button>
               </div>
+            )}
 
-              {/* Task List */}
-              <div className="p-4 overflow-y-auto max-h-[50vh]">
-                {activeTasks.length > 0 ? (
+            {/* Task List */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              {showCompleted ? (
+                completedTasks.length > 0 ? (
                   <div className="space-y-3">
-                    {activeTasks.map((task, index) => (
+                    {completedTasks.map((task, index) => (
                       <motion.div
                         key={task.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                       >
-                        <Card className="group hover:border-primary/50 transition-colors">
+                        <Card className="opacity-70">
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
                               <button
-                                onClick={() => onCompleteTask(task.id)}
-                                className="mt-1 text-muted-foreground hover:text-primary transition-colors"
+                                onClick={() => onUncompleteTask(task.id)}
+                                className="mt-1 text-primary"
                               >
-                                <CheckCircle2 className="h-5 w-5" />
+                                <CheckCircle2 className="h-5 w-5 fill-primary" />
                               </button>
-                              <div
-                                className="flex-1 cursor-pointer"
-                                onClick={() => handleTaskClick(task)}
-                              >
-                                <h3 className="font-medium text-foreground">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-foreground line-through">
                                   {task.title}
                                 </h3>
                                 {task.description && (
@@ -156,38 +173,28 @@ export function TaskPanel({
                                     {task.description}
                                   </p>
                                 )}
-                                {hasIncompleteSprint(task.id) && (
-                                  <span className="inline-block mt-2 text-xs bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded">
-                                    Has stopped sprint
-                                  </span>
+                                {task.completedAt && (
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    Completed {new Date(task.completedAt).toLocaleDateString()}
+                                  </p>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleTaskClick(task)}
-                                >
-                                  <Play className="h-4 w-4" />
-                                </Button>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                      <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="bg-popover">
-                                    <DropdownMenuItem
-                                      onClick={() => onDeleteTask(task.id)}
-                                      className="text-destructive focus:text-destructive"
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="bg-popover">
+                                  <DropdownMenuItem
+                                    onClick={() => onDeleteTask(task.id)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </CardContent>
                         </Card>
@@ -196,15 +203,88 @@ export function TaskPanel({
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <div className="text-4xl mb-3">📋</div>
-                    <p className="text-muted-foreground">No tasks yet</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Add a task to start tracking your work
-                    </p>
+                    <div className="text-4xl mb-3">✅</div>
+                    <p className="text-muted-foreground">No completed tasks yet</p>
                   </div>
-                )}
-              </div>
-            </motion.div>
+                )
+              ) : activeTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {activeTasks.map((task, index) => (
+                    <motion.div
+                      key={task.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <Card className="group hover:border-primary/50 transition-colors">
+                        <CardContent className="p-3">
+                          <div className="flex items-start gap-3">
+                            <button
+                              onClick={() => onCompleteTask(task.id)}
+                              className="mt-1 text-muted-foreground hover:text-primary transition-colors"
+                            >
+                              <CheckCircle2 className="h-5 w-5" />
+                            </button>
+                            <div
+                              className="flex-1 cursor-pointer"
+                              onClick={() => handleTaskClick(task)}
+                            >
+                              <h3 className="font-medium text-foreground">
+                                {task.title}
+                              </h3>
+                              {task.description && (
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                  {task.description}
+                                </p>
+                              )}
+                              {hasIncompleteSprint(task.id) && (
+                                <span className="inline-block mt-2 text-xs bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded">
+                                  Has stopped sprint
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleTaskClick(task)}
+                              >
+                                <Play className="h-4 w-4" />
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="bg-popover">
+                                  <DropdownMenuItem
+                                    onClick={() => onDeleteTask(task.id)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-3">📋</div>
+                  <p className="text-muted-foreground">No tasks yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Add a task to start tracking your work
+                  </p>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
