@@ -38,6 +38,10 @@ export function useBlocks() {
     setBlocks(prev => prev.filter(block => block.id !== id));
   }, [setBlocks]);
 
+  const reorderBlocks = useCallback((newBlocks: TimerBlock[]) => {
+    setBlocks(newBlocks);
+  }, [setBlocks]);
+
   const getBlockById = useCallback((id: string) => {
     return blocks.find(block => block.id === id);
   }, [blocks]);
@@ -47,6 +51,7 @@ export function useBlocks() {
     addBlock,
     updateBlock,
     deleteBlock,
+    reorderBlocks,
     getBlockById,
   };
 }

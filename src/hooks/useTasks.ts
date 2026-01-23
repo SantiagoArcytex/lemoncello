@@ -31,6 +31,12 @@ export function useTasks() {
     ));
   }, [setTasks]);
 
+  const uncompleteTask = useCallback((id: string) => {
+    setTasks(prev => prev.map(task =>
+      task.id === id ? { ...task, isCompleted: false, completedAt: undefined } : task
+    ));
+  }, [setTasks]);
+
   const deleteTask = useCallback((id: string) => {
     setTasks(prev => prev.filter(task => task.id !== id));
   }, [setTasks]);
@@ -52,6 +58,7 @@ export function useTasks() {
     addTask,
     updateTask,
     completeTask,
+    uncompleteTask,
     deleteTask,
     getActiveTasks,
     getCompletedTasks,

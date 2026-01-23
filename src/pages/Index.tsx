@@ -12,7 +12,7 @@ import { useTasks } from '@/hooks/useTasks';
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'timer' | 'reports'>('timer');
   
-  const { blocks, addBlock, updateBlock, deleteBlock } = useBlocks();
+  const { blocks, addBlock, updateBlock, deleteBlock, reorderBlocks } = useBlocks();
   const {
     timerState,
     sessions,
@@ -30,6 +30,7 @@ const Index = () => {
     tasks,
     addTask,
     completeTask,
+    uncompleteTask,
     deleteTask,
   } = useTasks();
 
@@ -78,10 +79,12 @@ const Index = () => {
                   onUpdateBlock={updateBlock}
                   onDeleteBlock={deleteBlock}
                   onCreateBlock={addBlock}
+                  onReorderBlocks={reorderBlocks}
                   todayMinutes={todayMinutes}
                   tasks={tasks}
                   onAddTask={addTask}
                   onCompleteTask={completeTask}
+                  onUncompleteTask={uncompleteTask}
                   onDeleteTask={deleteTask}
                   hasIncompleteSprint={hasIncompleteSprint}
                 />

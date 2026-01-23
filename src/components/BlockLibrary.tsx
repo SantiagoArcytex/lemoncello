@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, ClipboardList, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BlockCard } from './BlockCard';
+import { DraggableBlockCard } from './DraggableBlockCard';
 import { CreateBlockModal } from './CreateBlockModal';
 import { TaskPanel } from './TaskPanel';
 import { TimerBlock, Task } from '@/types/blocks';
@@ -13,10 +13,12 @@ interface BlockLibraryProps {
   onUpdateBlock: (id: string, updates: Partial<TimerBlock>) => void;
   onDeleteBlock: (id: string) => void;
   onCreateBlock: (block: Omit<TimerBlock, 'id' | 'createdAt'>) => void;
+  onReorderBlocks: (blocks: TimerBlock[]) => void;
   todayMinutes: number;
   tasks: Task[];
   onAddTask: (title: string, description: string) => void;
   onCompleteTask: (id: string) => void;
+  onUncompleteTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
   hasIncompleteSprint: (taskId: string) => boolean;
 }
@@ -27,18 +29,43 @@ export function BlockLibrary({
   onUpdateBlock,
   onDeleteBlock,
   onCreateBlock,
+  onReorderBlocks,
   todayMinutes,
   tasks,
   onAddTask,
   onCompleteTask,
+  onUncompleteTask,
   onDeleteTask,
   hasIncompleteSprint,
 }: BlockLibraryProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isTaskPanelOpen, setIsTaskPanelOpen] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleStartSprintFromTask = (task: Task, block: TimerBlock) => {
     onStartBlock(block, task.id, task.title);
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnter = (index: number) => {
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragEnd = () => {
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      const newBlocks = [...blocks];
+      const [draggedBlock] = newBlocks.splice(draggedIndex, 1);
+      newBlocks.splice(dragOverIndex, 0, draggedBlock);
+      onReorderBlocks(newBlocks);
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   return (
@@ -112,13 +139,18 @@ export function BlockLibrary({
           <h2 className="text-lg font-semibold text-foreground mb-4">Your Blocks</h2>
           <div className="space-y-3">
             {blocks.map((block, index) => (
-              <BlockCard
+              <DraggableBlockCard
                 key={block.id}
                 block={block}
                 onStart={onStartBlock}
                 onUpdate={onUpdateBlock}
                 onDelete={onDeleteBlock}
                 index={index}
+                onDragStart={handleDragStart}
+                onDragEnter={handleDragEnter}
+                onDragEnd={handleDragEnd}
+                isDragging={draggedIndex === index}
+                isDragOver={dragOverIndex === index}
               />
             ))}
           </div>
@@ -155,6 +187,7 @@ export function BlockLibrary({
         tasks={tasks}
         onAddTask={onAddTask}
         onCompleteTask={onCompleteTask}
+        onUncompleteTask={onUncompleteTask}
         onDeleteTask={onDeleteTask}
         onStartSprint={handleStartSprintFromTask}
         blocks={blocks}
