@@ -6,17 +6,21 @@ const generateId = () => Math.random().toString(36).substring(2, 15);
 
 export function useBlocks() {
   const [blocks, setBlocks] = useLocalStorage<TimerBlock[]>('lemoncello-blocks', []);
+  const [version, setVersion] = useLocalStorage<number>('lemoncello-blocks-version', 0);
+  
+  const CURRENT_VERSION = 2; // Increment this to force reset to new defaults
 
   useEffect(() => {
-    if (blocks.length === 0) {
+    if (blocks.length === 0 || version < CURRENT_VERSION) {
       const defaultBlocksWithIds: TimerBlock[] = DEFAULT_BLOCKS.map(block => ({
         ...block,
         id: generateId(),
         createdAt: new Date(),
       }));
       setBlocks(defaultBlocksWithIds);
+      setVersion(CURRENT_VERSION);
     }
-  }, [blocks.length, setBlocks]);
+  }, [blocks.length, version, setBlocks, setVersion]);
 
   const addBlock = useCallback((block: Omit<TimerBlock, 'id' | 'createdAt'>) => {
     const newBlock: TimerBlock = {
