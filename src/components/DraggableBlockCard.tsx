@@ -82,12 +82,9 @@ export function DraggableBlockCard({
   return (
     <div
       ref={dragRef}
-      draggable
-      onDragStart={handleDragStartEvent}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnterEvent}
-      onDragEnd={handleDragEndEvent}
-      className={`touch-none ${isDragOver ? 'border-primary' : ''}`}
+      className={isDragOver ? 'border-primary' : ''}
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -103,7 +100,10 @@ export function DraggableBlockCard({
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div 
-                className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground hover:text-foreground transition-colors"
+                draggable
+                onDragStart={handleDragStartEvent}
+                onDragEnd={handleDragEndEvent}
+                className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground hover:text-foreground transition-colors touch-none"
               >
                 <GripVertical className="h-5 w-5" />
               </div>
