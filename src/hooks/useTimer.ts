@@ -4,6 +4,18 @@ import { useLocalStorage } from './useLocalStorage';
 
 const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
+// Quick Start block - infinite pomodoro
+const QUICK_START_BLOCK: TimerBlock = {
+  id: 'quick-start',
+  name: 'Inicio Rápido',
+  type: 'pomodoro',
+  workDuration: 25,
+  restDuration: 5,
+  cycles: 999, // Practically infinite
+  icon: '⚡',
+  createdAt: new Date(),
+};
+
 export function useTimer() {
   const [sessions, setSessions] = useLocalStorage<TimerSession[]>('lemoncello-sessions', []);
   const [timerState, setTimerState] = useState<TimerState>({
@@ -18,6 +30,8 @@ export function useTimer() {
     currentTaskId: undefined,
     currentTaskName: undefined,
   });
+  
+  const [pendingTransition, setPendingTransition] = useState<'work-to-break' | 'break-to-work' | null>(null);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -143,7 +157,7 @@ export function useTimer() {
     setTimerState(prev => ({ ...prev, isPaused: false, isRunning: true }));
   }, [playStartSound]);
 
-  const stopTimer = useCallback(() => {
+  const stopTimerWithDescription = useCallback((description: string) => {
     if (timerState.currentBlock && timerState.sessionStartTime) {
       const block = timerState.currentBlock;
       const expectedTotalSeconds = block.type === 'rest'
@@ -155,7 +169,7 @@ export function useTimer() {
       
       completeSession(
         timerState.currentBlock,
-        timerState.workDescription,
+        description,
         timerState.sessionStartTime,
         true,
         timeCompletedMinutes
@@ -174,7 +188,59 @@ export function useTimer() {
       currentTaskId: undefined,
       currentTaskName: undefined,
     });
+    setPendingTransition(null);
   }, [timerState, completeSession]);
+
+  const getElapsedTime = useCallback(() => {
+    if (!timerState.currentBlock || !timerState.sessionStartTime) return '0 min';
+    
+    const block = timerState.currentBlock;
+    const expectedTotalSeconds = block.type === 'rest'
+      ? block.restDuration * 60
+      : block.workDuration * 60 * block.cycles + block.restDuration * 60 * (block.cycles - 1);
+    
+    const elapsedSeconds = expectedTotalSeconds - timerState.timeRemaining;
+    const minutes = Math.floor(elapsedSeconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}min`;
+    }
+    return `${minutes} min`;
+  }, [timerState]);
+
+  const startQuickStart = useCallback(() => {
+    startBlock(QUICK_START_BLOCK);
+  }, [startBlock]);
+
+  const confirmTransition = useCallback(() => {
+    if (!timerState.currentBlock || !pendingTransition) return;
+    
+    const block = timerState.currentBlock;
+    
+    if (pendingTransition === 'work-to-break') {
+      playEndSound();
+      setTimerState(prev => ({
+        ...prev,
+        isRunning: true,
+        isPaused: false,
+        isWorkPhase: false,
+        timeRemaining: block.restDuration * 60,
+      }));
+    } else {
+      playStartSound();
+      setTimerState(prev => ({
+        ...prev,
+        isRunning: true,
+        isPaused: false,
+        isWorkPhase: true,
+        currentCycle: prev.currentCycle + 1,
+        timeRemaining: block.workDuration * 60,
+      }));
+    }
+    
+    setPendingTransition(null);
+  }, [timerState.currentBlock, pendingTransition, playEndSound, playStartSound]);
 
   const updateWorkDescription = useCallback((description: string) => {
     setTimerState(prev => ({ ...prev, workDescription: description }));
@@ -224,18 +290,23 @@ export function useTimer() {
             };
           }
           
-          sendNotification('Break Time! ☕', `Take a ${block.restDuration} minute break.`);
+          // Pause and show modal for break transition
+          sendNotification('¡Hora del Descanso! ☕', `Toma un descanso de ${block.restDuration} minutos.`);
+          setPendingTransition('work-to-break');
           return {
             ...prev,
-            isWorkPhase: false,
+            isRunning: false,
+            isPaused: true,
             timeRemaining: block.restDuration * 60,
           };
         } else {
-          sendNotification('Back to Work! 💪', `Starting cycle ${prev.currentCycle + 1} of ${block.cycles}.`, true);
+          // Pause and show modal for work transition
+          sendNotification('¡Vamos a Trabajar! 💪', `Iniciando ciclo ${prev.currentCycle + 1} de ${block.cycles}.`);
+          setPendingTransition('break-to-work');
           return {
             ...prev,
-            isWorkPhase: true,
-            currentCycle: prev.currentCycle + 1,
+            isRunning: false,
+            isPaused: true,
             timeRemaining: block.workDuration * 60,
           };
         }
@@ -284,11 +355,15 @@ export function useTimer() {
   return {
     timerState,
     sessions,
+    pendingTransition,
     startBlock,
+    startQuickStart,
     pauseTimer,
     resumeTimer,
-    stopTimer,
+    stopTimerWithDescription,
+    confirmTransition,
     updateWorkDescription,
+    getElapsedTime,
     getTodaySessions,
     getSessionsByDate,
     getSessionsByTask,

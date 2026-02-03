@@ -5,22 +5,31 @@ import { BlockLibrary } from '@/components/BlockLibrary';
 import { ActiveTimer } from '@/components/ActiveTimer';
 import { ReportsView } from '@/components/ReportsView';
 import { BottomNav } from '@/components/BottomNav';
+import { QuickStartButton } from '@/components/QuickStartButton';
+import { PhaseTransitionModal } from '@/components/PhaseTransitionModal';
+import { StopConfirmationModal } from '@/components/StopConfirmationModal';
 import { useBlocks } from '@/hooks/useBlocks';
 import { useTimer } from '@/hooks/useTimer';
 import { useTasks } from '@/hooks/useTasks';
+import { useBackgroundNotification } from '@/hooks/useBackgroundNotification';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'timer' | 'reports'>('timer');
+  const [showStopModal, setShowStopModal] = useState(false);
   
   const { blocks, addBlock, updateBlock, deleteBlock, reorderBlocks } = useBlocks();
   const {
     timerState,
     sessions,
+    pendingTransition,
     startBlock,
+    startQuickStart,
     pauseTimer,
     resumeTimer,
-    stopTimer,
+    stopTimerWithDescription,
+    confirmTransition,
     updateWorkDescription,
+    getElapsedTime,
     getTodaySessions,
     hasIncompleteSprint,
     clearSessions,
@@ -34,11 +43,28 @@ const Index = () => {
     deleteTask,
   } = useTasks();
 
+  // Background notification hook
+  useBackgroundNotification({
+    isRunning: timerState.isRunning,
+    timeRemaining: timerState.timeRemaining,
+    blockName: timerState.currentBlock?.name || '',
+    isWorkPhase: timerState.isWorkPhase,
+  });
+
   const todayMinutes = useMemo(() => {
     return getTodaySessions().reduce((sum, s) => sum + s.totalWorkMinutes, 0);
   }, [getTodaySessions]);
 
   const isTimerActive = timerState.isRunning || timerState.isPaused;
+
+  const handleStopRequest = () => {
+    setShowStopModal(true);
+  };
+
+  const handleStopConfirm = (description: string) => {
+    stopTimerWithDescription(description);
+    setShowStopModal(false);
+  };
 
   return (
     <>
@@ -62,7 +88,7 @@ const Index = () => {
                   timerState={timerState}
                   onPause={pauseTimer}
                   onResume={resumeTimer}
-                  onStop={stopTimer}
+                  onStop={handleStopRequest}
                   onUpdateDescription={updateWorkDescription}
                 />
               </motion.div>
@@ -102,10 +128,35 @@ const Index = () => {
           )}
         </AnimatePresence>
 
+        <QuickStartButton
+          onQuickStart={startQuickStart}
+          isTimerActive={isTimerActive}
+        />
+
         <BottomNav
           activeTab={activeTab}
           onTabChange={setActiveTab}
           isTimerActive={isTimerActive}
+        />
+
+        {/* Phase Transition Modal */}
+        <PhaseTransitionModal
+          isOpen={pendingTransition !== null}
+          transitionType={pendingTransition}
+          breakDuration={timerState.currentBlock?.restDuration || 5}
+          currentCycle={timerState.currentCycle + 1}
+          totalCycles={timerState.currentBlock?.cycles || 1}
+          onConfirm={confirmTransition}
+        />
+
+        {/* Stop Confirmation Modal */}
+        <StopConfirmationModal
+          isOpen={showStopModal}
+          onClose={() => setShowStopModal(false)}
+          onConfirm={handleStopConfirm}
+          blockName={timerState.currentBlock?.name || ''}
+          elapsedTime={getElapsedTime()}
+          currentDescription={timerState.workDescription}
         />
       </main>
     </>
