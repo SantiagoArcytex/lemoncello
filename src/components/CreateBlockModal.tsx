@@ -21,17 +21,19 @@ const BLOCK_TYPES: { value: BlockType; label: string; description: string }[] = 
 
 export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlockModalProps) {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [type, setType] = useState<BlockType>('pomodoro');
   const [icon, setIcon] = useState('🎯');
   const [workDuration, setWorkDuration] = useState(25);
   const [restDuration, setRestDuration] = useState(5);
-  const [cycles, setCycles] = useState(4);
+  const [cycles, setCycles] = useState(1);
 
   const handleCreate = () => {
     if (!name.trim()) return;
     
     onCreateBlock({
       name: name.trim(),
+      description: description.trim(),
       type,
       icon,
       workDuration: type === 'rest' ? 0 : workDuration,
@@ -41,11 +43,12 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
     
     // Reset form
     setName('');
+    setDescription('');
     setType('pomodoro');
     setIcon('🎯');
     setWorkDuration(25);
     setRestDuration(5);
-    setCycles(4);
+    setCycles(1);
     onClose();
   };
 
@@ -69,7 +72,7 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
             <Card className="border-primary/20">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle>Create New Block</CardTitle>
+                  <CardTitle>New Task</CardTitle>
                   <Button variant="ghost" size="icon" onClick={onClose}>
                     <X className="h-4 w-4" />
                   </Button>
@@ -80,7 +83,7 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
                 {/* Name Input */}
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">
-                    Block Name
+                    Task Name
                   </label>
                   <input
                     type="text"
@@ -88,6 +91,20 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g., Morning Focus"
                     className="w-full h-11 px-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                {/* Description Input */}
+                <div>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
+                    Description (optional)
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="What will you work on?"
+                    rows={2}
+                    className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                   />
                 </div>
 
@@ -194,7 +211,7 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
                   size="lg"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Block
+                  Create Task
                 </Button>
               </CardContent>
             </Card>

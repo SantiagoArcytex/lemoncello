@@ -108,9 +108,12 @@ export function DraggableBlockCard({
                 <GripVertical className="h-5 w-5" />
               </div>
               <span className="text-2xl">{block.icon}</span>
-              <div>
+              <div className="flex-1 min-w-0">
                 <CardTitle className="text-lg">{block.name}</CardTitle>
-                <p className="text-sm text-muted-foreground">{getBlockInfo()}</p>
+                {block.description && (
+                  <p className="text-sm text-muted-foreground truncate">{block.description}</p>
+                )}
+                <p className="text-xs text-muted-foreground">{getBlockInfo()}</p>
               </div>
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

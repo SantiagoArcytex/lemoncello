@@ -3,6 +3,7 @@ export type BlockType = 'pomodoro' | 'meeting' | 'rest' | 'custom' | 'call';
 export interface TimerBlock {
   id: string;
   name: string;
+  description?: string; // Task description
   type: BlockType;
   workDuration: number; // in minutes
   restDuration: number; // in minutes
@@ -29,6 +30,8 @@ export interface TimerSession {
   taskName?: string;
 }
 
+// Task interface is now merged with TimerBlock
+// Keeping for backward compatibility with existing sessions
 export interface Task {
   id: string;
   title: string;
