@@ -31,6 +31,9 @@ export function useTimer() {
     currentTaskName: undefined,
   });
   
+  const [accumulatedRestTime, setAccumulatedRestTime] = useState<number>(0);
+  const [skippedBreaksCount, setSkippedBreaksCount] = useState<number>(0);
+  
   const [pendingTransition, setPendingTransition] = useState<'work-to-break' | 'break-to-work' | null>(null);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -237,13 +240,18 @@ export function useTimer() {
     
     if (pendingTransition === 'work-to-break') {
       playEndSound();
+      // Use accumulated rest time if any, otherwise use block's rest duration
+      const breakDuration = accumulatedRestTime > 0 ? accumulatedRestTime : block.restDuration;
       setTimerState(prev => ({
         ...prev,
         isRunning: true,
         isPaused: false,
         isWorkPhase: false,
-        timeRemaining: block.restDuration * 60,
+        timeRemaining: breakDuration * 60,
       }));
+      // Reset accumulated rest after taking the break
+      setAccumulatedRestTime(0);
+      setSkippedBreaksCount(0);
     } else {
       playStartSound();
       setTimerState(prev => ({
@@ -257,7 +265,29 @@ export function useTimer() {
     }
     
     setPendingTransition(null);
-  }, [timerState.currentBlock, pendingTransition, playEndSound, playStartSound]);
+  }, [timerState.currentBlock, pendingTransition, playEndSound, playStartSound, accumulatedRestTime]);
+
+  const keepWorking = useCallback(() => {
+    if (!timerState.currentBlock || pendingTransition !== 'work-to-break') return;
+    
+    const block = timerState.currentBlock;
+    
+    // Accumulate rest time: first skip adds block.restDuration, subsequent skips add 5 more each
+    const additionalRest = skippedBreaksCount === 0 ? block.restDuration : 5;
+    setAccumulatedRestTime(prev => prev + additionalRest);
+    setSkippedBreaksCount(prev => prev + 1);
+    
+    playStartSound();
+    setTimerState(prev => ({
+      ...prev,
+      isRunning: true,
+      isPaused: false,
+      isWorkPhase: true,
+      timeRemaining: block.workDuration * 60,
+    }));
+    
+    setPendingTransition(null);
+  }, [timerState.currentBlock, pendingTransition, skippedBreaksCount, playStartSound]);
 
   const updateWorkDescription = useCallback((description: string) => {
     setTimerState(prev => ({ ...prev, workDescription: description }));
@@ -381,6 +411,8 @@ export function useTimer() {
     timerState,
     sessions,
     pendingTransition,
+    accumulatedRestTime,
+    skippedBreaksCount,
     startBlock,
     startQuickStart,
     pauseTimer,
@@ -388,6 +420,7 @@ export function useTimer() {
     stopTimerWithDescription,
     cancelTimer,
     confirmTransition,
+    keepWorking,
     updateWorkDescription,
     getElapsedTime,
     getTodaySessions,

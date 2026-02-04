@@ -29,6 +29,8 @@ const Index = () => {
     timerState,
     sessions,
     pendingTransition,
+    accumulatedRestTime,
+    skippedBreaksCount,
     startBlock,
     startQuickStart,
     pauseTimer,
@@ -36,6 +38,7 @@ const Index = () => {
     stopTimerWithDescription,
     cancelTimer,
     confirmTransition,
+    keepWorking,
     updateWorkDescription,
     getElapsedTime,
     getTodaySessions,
@@ -207,7 +210,10 @@ const Index = () => {
           breakDuration={timerState.currentBlock?.restDuration || 5}
           currentCycle={timerState.currentCycle + 1}
           totalCycles={timerState.currentBlock?.cycles || 1}
+          accumulatedRestTime={accumulatedRestTime}
+          skippedBreaksCount={skippedBreaksCount}
           onConfirm={confirmTransition}
+          onKeepWorking={keepWorking}
         />
 
         {/* Stop Confirmation Modal */}
