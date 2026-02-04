@@ -23,7 +23,7 @@ export function QuickStartButton({ onQuickStart, isTimerActive }: QuickStartButt
         className="rounded-full h-14 px-6 shadow-lg"
       >
         <Play className="h-5 w-5 mr-2" />
-        Inicio Rápido
+        Quick Start
       </Button>
     </motion.div>
   );

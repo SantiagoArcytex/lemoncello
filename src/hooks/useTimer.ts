@@ -4,14 +4,14 @@ import { useLocalStorage } from './useLocalStorage';
 
 const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
-// Quick Start block - infinite pomodoro
+// Quick Start block - infinite pomodoro (uses cycle 1 but allows infinite continuation)
 const QUICK_START_BLOCK: TimerBlock = {
   id: 'quick-start',
-  name: 'Inicio Rápido',
+  name: 'Quick Start',
   type: 'pomodoro',
   workDuration: 25,
   restDuration: 5,
-  cycles: 999, // Practically infinite
+  cycles: 9999, // Practically infinite
   icon: '⚡',
   createdAt: new Date(),
 };
@@ -94,16 +94,19 @@ export function useTimer() {
     description: string, 
     startTime: Date,
     stoppedByUser: boolean = false,
-    timeCompletedBeforeStopping?: number
+    timeCompletedBeforeStopping?: number,
+    actualCyclesCompleted?: number
   ) => {
     const now = new Date();
+    // For Quick Start (infinite), calculate based on actual time worked, not theoretical cycles
+    const cyclesForCalc = actualCyclesCompleted ?? block.cycles;
     const expectedDuration = block.type === 'rest' 
       ? block.restDuration 
-      : block.workDuration * block.cycles;
+      : block.workDuration * Math.min(cyclesForCalc, 100); // Cap at 100 for sanity
     
     const totalWorkMinutes = stoppedByUser && timeCompletedBeforeStopping !== undefined
       ? timeCompletedBeforeStopping
-      : (block.type === 'rest' ? 0 : block.workDuration * block.cycles);
+      : (block.type === 'rest' ? 0 : block.workDuration * Math.min(cyclesForCalc, 100));
 
     const session: TimerSession = {
       id: generateId(),
@@ -160,19 +163,18 @@ export function useTimer() {
   const stopTimerWithDescription = useCallback((description: string) => {
     if (timerState.currentBlock && timerState.sessionStartTime) {
       const block = timerState.currentBlock;
-      const expectedTotalSeconds = block.type === 'rest'
-        ? block.restDuration * 60
-        : block.workDuration * 60 * block.cycles + block.restDuration * 60 * (block.cycles - 1);
-      
-      const elapsedSeconds = expectedTotalSeconds - timerState.timeRemaining;
-      const timeCompletedMinutes = Math.floor(elapsedSeconds / 60);
+      // Calculate actual elapsed time from session start
+      const now = new Date();
+      const actualElapsedMs = now.getTime() - timerState.sessionStartTime.getTime();
+      const timeCompletedMinutes = Math.floor(actualElapsedMs / 60000);
       
       completeSession(
         timerState.currentBlock,
         description,
         timerState.sessionStartTime,
         true,
-        timeCompletedMinutes
+        timeCompletedMinutes,
+        timerState.currentCycle
       );
     }
     
@@ -192,22 +194,20 @@ export function useTimer() {
   }, [timerState, completeSession]);
 
   const getElapsedTime = useCallback(() => {
-    if (!timerState.currentBlock || !timerState.sessionStartTime) return '0 min';
+    if (!timerState.sessionStartTime) return '0 min';
     
-    const block = timerState.currentBlock;
-    const expectedTotalSeconds = block.type === 'rest'
-      ? block.restDuration * 60
-      : block.workDuration * 60 * block.cycles + block.restDuration * 60 * (block.cycles - 1);
-    
-    const elapsedSeconds = expectedTotalSeconds - timerState.timeRemaining;
-    const minutes = Math.floor(elapsedSeconds / 60);
+    // Calculate actual elapsed time from session start
+    const now = new Date();
+    const actualElapsedMs = now.getTime() - timerState.sessionStartTime.getTime();
+    const totalSeconds = Math.floor(actualElapsedMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
     const hours = Math.floor(minutes / 60);
     
     if (hours > 0) {
       return `${hours}h ${minutes % 60}min`;
     }
     return `${minutes} min`;
-  }, [timerState]);
+  }, [timerState.sessionStartTime]);
 
   const startQuickStart = useCallback(() => {
     startBlock(QUICK_START_BLOCK);
@@ -291,7 +291,7 @@ export function useTimer() {
           }
           
           // Pause and show modal for break transition
-          sendNotification('¡Hora del Descanso! ☕', `Toma un descanso de ${block.restDuration} minutos.`);
+          sendNotification('Break Time! ☕', `Take a ${block.restDuration} minute break.`);
           setPendingTransition('work-to-break');
           return {
             ...prev,
@@ -301,7 +301,7 @@ export function useTimer() {
           };
         } else {
           // Pause and show modal for work transition
-          sendNotification('¡Vamos a Trabajar! 💪', `Iniciando ciclo ${prev.currentCycle + 1} de ${block.cycles}.`);
+          sendNotification('Back to Work! 💪', `Starting cycle ${prev.currentCycle + 1}.`);
           setPendingTransition('break-to-work');
           return {
             ...prev,
