@@ -40,11 +40,11 @@ export function useBackgroundNotification({
 
     closeNotification();
 
-    const phase = isWorkPhase ? 'Trabajo' : 'Descanso';
+    const phase = isWorkPhase ? 'Work' : 'Break';
     const timeStr = formatTime(timeRemaining);
 
     notificationRef.current = new Notification(`${timeStr} - ${blockName}`, {
-      body: `${phase} en progreso`,
+      body: `${phase} in progress`,
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       tag: 'lemoncello-persistent',

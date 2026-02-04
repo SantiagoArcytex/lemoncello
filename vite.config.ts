@@ -15,9 +15,9 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "icon-192.png", "icon-512.png"],
+      includeAssets: ["favicon.ico", "icon-192.png", "icon-512.png", "sounds/*.mp3"],
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2,mp3}"],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -41,20 +41,6 @@ export default defineConfig(({ mode }) => ({
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/assets\.mixkit\.co\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "audio-cache",
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
               },
               cacheableResponse: {
                 statuses: [0, 200],
