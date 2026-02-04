@@ -193,6 +193,23 @@ export function useTimer() {
     setPendingTransition(null);
   }, [timerState, completeSession]);
 
+  const cancelTimer = useCallback(() => {
+    // Cancel without saving - data is lost
+    setTimerState({
+      isRunning: false,
+      isPaused: false,
+      currentBlock: null,
+      currentCycle: 1,
+      isWorkPhase: true,
+      timeRemaining: 0,
+      workDescription: '',
+      sessionStartTime: null,
+      currentTaskId: undefined,
+      currentTaskName: undefined,
+    });
+    setPendingTransition(null);
+  }, []);
+
   const getElapsedTime = useCallback(() => {
     if (!timerState.sessionStartTime) return '0 min';
     
@@ -361,6 +378,7 @@ export function useTimer() {
     pauseTimer,
     resumeTimer,
     stopTimerWithDescription,
+    cancelTimer,
     confirmTransition,
     updateWorkDescription,
     getElapsedTime,

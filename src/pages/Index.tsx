@@ -5,9 +5,9 @@ import { BlockLibrary } from '@/components/BlockLibrary';
 import { ActiveTimer } from '@/components/ActiveTimer';
 import { ReportsView } from '@/components/ReportsView';
 import { BottomNav } from '@/components/BottomNav';
-import { QuickStartButton } from '@/components/QuickStartButton';
 import { PhaseTransitionModal } from '@/components/PhaseTransitionModal';
 import { StopConfirmationModal } from '@/components/StopConfirmationModal';
+import { CancelConfirmationModal } from '@/components/CancelConfirmationModal';
 import { useBlocks } from '@/hooks/useBlocks';
 import { useTimer } from '@/hooks/useTimer';
 import { useTasks } from '@/hooks/useTasks';
@@ -16,6 +16,7 @@ import { useBackgroundNotification } from '@/hooks/useBackgroundNotification';
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'timer' | 'reports'>('timer');
   const [showStopModal, setShowStopModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   
   const { blocks, addBlock, updateBlock, deleteBlock, reorderBlocks } = useBlocks();
   const {
@@ -27,6 +28,7 @@ const Index = () => {
     pauseTimer,
     resumeTimer,
     stopTimerWithDescription,
+    cancelTimer,
     confirmTransition,
     updateWorkDescription,
     getElapsedTime,
@@ -61,9 +63,18 @@ const Index = () => {
     setShowStopModal(true);
   };
 
+  const handleCancelRequest = () => {
+    setShowCancelModal(true);
+  };
+
   const handleStopConfirm = (description: string) => {
     stopTimerWithDescription(description);
     setShowStopModal(false);
+  };
+
+  const handleCancelConfirm = () => {
+    cancelTimer();
+    setShowCancelModal(false);
   };
 
   return (
@@ -89,6 +100,7 @@ const Index = () => {
                   onPause={pauseTimer}
                   onResume={resumeTimer}
                   onStop={handleStopRequest}
+                  onCancel={handleCancelRequest}
                   onUpdateDescription={updateWorkDescription}
                 />
               </motion.div>
@@ -106,6 +118,7 @@ const Index = () => {
                   onDeleteBlock={deleteBlock}
                   onCreateBlock={addBlock}
                   onReorderBlocks={reorderBlocks}
+                  onQuickStart={startQuickStart}
                   todayMinutes={todayMinutes}
                   tasks={tasks}
                   onAddTask={addTask}
@@ -127,11 +140,6 @@ const Index = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <QuickStartButton
-          onQuickStart={startQuickStart}
-          isTimerActive={isTimerActive}
-        />
 
         <BottomNav
           activeTab={activeTab}
@@ -157,6 +165,14 @@ const Index = () => {
           blockName={timerState.currentBlock?.name || ''}
           elapsedTime={getElapsedTime()}
           currentDescription={timerState.workDescription}
+        />
+
+        {/* Cancel Confirmation Modal */}
+        <CancelConfirmationModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={handleCancelConfirm}
+          blockName={timerState.currentBlock?.name || ''}
         />
       </main>
     </>

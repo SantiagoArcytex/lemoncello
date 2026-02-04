@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Square, RotateCcw } from 'lucide-react';
+import { Play, Pause, Square, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TimerRing } from './TimerRing';
 import { TimerState, TimerBlock } from '@/types/blocks';
@@ -9,6 +9,7 @@ interface ActiveTimerProps {
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
+  onCancel: () => void;
   onUpdateDescription: (desc: string) => void;
 }
 
@@ -40,6 +41,7 @@ export function ActiveTimer({
   onPause,
   onResume,
   onStop,
+  onCancel,
   onUpdateDescription,
 }: ActiveTimerProps) {
   if (!timerState.currentBlock) return null;
@@ -109,10 +111,11 @@ export function ActiveTimer({
         <Button
           variant="outline"
           size="icon"
-          onClick={onStop}
+          onClick={onCancel}
           className="h-14 w-14 rounded-full"
+          title="Cancel (lose progress)"
         >
-          <Square className="h-5 w-5" />
+          <X className="h-5 w-5" />
         </Button>
         
         <Button
@@ -132,6 +135,16 @@ export function ActiveTimer({
               Resume
             </>
           )}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={onStop}
+          className="h-14 w-14 rounded-full"
+          title="Stop (save progress)"
+        >
+          <Square className="h-5 w-5" />
         </Button>
       </motion.div>
 

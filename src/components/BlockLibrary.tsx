@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, ClipboardList, Zap } from 'lucide-react';
+import { Plus, ClipboardList, Zap, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DraggableBlockCard } from './DraggableBlockCard';
 import { CreateBlockModal } from './CreateBlockModal';
@@ -14,6 +14,7 @@ interface BlockLibraryProps {
   onDeleteBlock: (id: string) => void;
   onCreateBlock: (block: Omit<TimerBlock, 'id' | 'createdAt'>) => void;
   onReorderBlocks: (blocks: TimerBlock[]) => void;
+  onQuickStart: () => void;
   todayMinutes: number;
   tasks: Task[];
   onAddTask: (title: string, description: string) => void;
@@ -30,6 +31,7 @@ export function BlockLibrary({
   onDeleteBlock,
   onCreateBlock,
   onReorderBlocks,
+  onQuickStart,
   todayMinutes,
   tasks,
   onAddTask,
@@ -104,11 +106,29 @@ export function BlockLibrary({
           </div>
         </motion.div>
 
-        {/* Quick Actions */}
+        {/* Start Working Button - Main CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
+          className="mb-6"
+        >
+          <Button
+            variant="glow"
+            size="xl"
+            onClick={onQuickStart}
+            className="w-full h-16 text-lg"
+          >
+            <Play className="h-5 w-5 mr-2" />
+            Start Working!
+          </Button>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
           className="flex gap-3 mb-8"
         >
           <Button
@@ -134,7 +154,7 @@ export function BlockLibrary({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.25 }}
         >
           <h2 className="text-lg font-semibold text-foreground mb-4">Your Blocks</h2>
           <div className="space-y-3">
