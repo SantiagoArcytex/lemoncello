@@ -46,7 +46,7 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
   };
 
   const confirmStop = () => {
-    onStop(description.trim() || 'Call session');
+    onStop(description.trim() || 'Meeting session');
     setShowStopConfirm(false);
   };
 
@@ -66,8 +66,8 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
           >
             <Phone className="h-10 w-10 text-call" />
           </motion.div>
-          <h1 className="text-2xl font-bold text-foreground mb-1">Call in Progress</h1>
-          <p className="text-muted-foreground">Tracking your call time</p>
+          <h1 className="text-2xl font-bold text-foreground mb-1">Meeting in Progress</h1>
+          <p className="text-muted-foreground">Tracking your meeting time</p>
         </div>
 
         {/* Timer Display */}
@@ -80,12 +80,12 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
         {/* Description Field */}
         <div className="mb-8">
           <label className="block text-sm font-medium text-foreground mb-2">
-            Call Notes (optional)
+            Meeting Notes (optional)
           </label>
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add notes about this call..."
+            placeholder="Add notes about this meeting..."
             className="min-h-[100px] bg-secondary/50 border-border"
           />
         </div>
@@ -107,7 +107,7 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
             className="flex-1 bg-call hover:bg-call/90 text-white"
           >
             <Square className="h-5 w-5 mr-2" />
-            End Call
+            End Meeting
           </Button>
         </div>
 
@@ -119,7 +119,7 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
             className="mt-4 p-4 rounded-xl bg-secondary border border-border"
           >
             <p className="text-sm text-muted-foreground mb-3">
-              No notes added. End call anyway?
+              No notes added. End meeting anyway?
             </p>
             <div className="flex gap-2">
               <Button
@@ -135,7 +135,7 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
                 onClick={confirmStop}
                 className="flex-1 bg-call hover:bg-call/90"
               >
-                End Call
+                End Meeting
               </Button>
             </div>
           </motion.div>
@@ -149,7 +149,7 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
             className="mt-4 p-4 rounded-xl bg-destructive/10 border border-destructive/30"
           >
             <p className="text-sm text-destructive mb-3">
-              ⚠️ Canceling will permanently discard this call record. No time will be saved.
+              ⚠️ Canceling will permanently discard this meeting record. No time will be saved.
             </p>
             <div className="flex gap-2">
               <Button
@@ -158,7 +158,7 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
                 onClick={() => setShowCancelConfirm(false)}
                 className="flex-1"
               >
-                Keep Call
+                Keep Meeting
               </Button>
               <Button
                 variant="destructive"
@@ -166,7 +166,7 @@ export function ActiveCall({ startTime, onStop, onCancel }: ActiveCallProps) {
                 onClick={onCancel}
                 className="flex-1"
               >
-                Discard Call
+                Discard Meeting
               </Button>
             </div>
           </motion.div>

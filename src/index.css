@@ -120,6 +120,52 @@
     transform: rotate(-90deg);
     transform-origin: center;
   }
+
+  /* Animated stroke effect for icons */
+  .stroke-animated {
+    fill: transparent;
+    stroke: hsl(var(--primary));
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.8)) drop-shadow(0 0 16px hsl(var(--primary) / 0.5));
+    animation: stroke-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes stroke-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.6)) drop-shadow(0 0 12px hsl(var(--primary) / 0.3));
+      stroke-dashoffset: 0;
+    }
+    50% {
+      filter: drop-shadow(0 0 12px hsl(var(--primary) / 1)) drop-shadow(0 0 24px hsl(var(--primary) / 0.7));
+      stroke-dashoffset: 20;
+    }
+  }
+
+  /* Animated glowing text stroke */
+  .text-gradient-stroke {
+    color: transparent;
+    -webkit-text-stroke: 1.5px hsl(var(--primary));
+    text-shadow: 
+      0 0 10px hsl(var(--primary) / 0.8),
+      0 0 20px hsl(var(--primary) / 0.5),
+      0 0 30px hsl(var(--primary) / 0.3);
+    animation: text-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes text-glow {
+    0%, 100% {
+      text-shadow: 
+        0 0 8px hsl(var(--primary) / 0.6),
+        0 0 16px hsl(var(--primary) / 0.4),
+        0 0 24px hsl(var(--primary) / 0.2);
+    }
+    50% {
+      text-shadow: 
+        0 0 12px hsl(var(--primary) / 1),
+        0 0 24px hsl(var(--primary) / 0.7),
+        0 0 36px hsl(var(--primary) / 0.5);
+    }
+  }
 }
 
 /* Custom scrollbar */
