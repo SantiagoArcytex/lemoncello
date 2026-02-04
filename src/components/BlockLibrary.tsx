@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, ClipboardList, Zap, Play } from 'lucide-react';
+import { Plus, ClipboardList, Zap, Play, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DraggableBlockCard } from './DraggableBlockCard';
 import { CreateBlockModal } from './CreateBlockModal';
@@ -15,6 +15,7 @@ interface BlockLibraryProps {
   onCreateBlock: (block: Omit<TimerBlock, 'id' | 'createdAt'>) => void;
   onReorderBlocks: (blocks: TimerBlock[]) => void;
   onQuickStart: () => void;
+  onStartCall: () => void;
   todayMinutes: number;
   tasks: Task[];
   onAddTask: (title: string, description: string) => void;
@@ -32,6 +33,7 @@ export function BlockLibrary({
   onCreateBlock,
   onReorderBlocks,
   onQuickStart,
+  onStartCall,
   todayMinutes,
   tasks,
   onAddTask,
@@ -111,7 +113,7 @@ export function BlockLibrary({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="mb-6"
+          className="mb-3"
         >
           <Button
             variant="glow"
@@ -124,11 +126,28 @@ export function BlockLibrary({
           </Button>
         </motion.div>
 
-        {/* Quick Actions */}
+        {/* Start a Call Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="mb-6"
+        >
+          <Button
+            size="lg"
+            onClick={onStartCall}
+            className="w-full h-12 bg-call hover:bg-call/90 text-call-foreground"
+          >
+            <Phone className="h-5 w-5 mr-2" />
+            Start a Call
+          </Button>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
           className="flex gap-3 mb-8"
         >
           <Button
@@ -154,7 +173,7 @@ export function BlockLibrary({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.3 }}
         >
           <h2 className="text-lg font-semibold text-foreground mb-4">Your Blocks</h2>
           <div className="space-y-3">
