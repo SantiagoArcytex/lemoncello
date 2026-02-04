@@ -135,7 +135,7 @@ export function useTimer() {
     setSessions(prev => [...prev, session]);
   }, [setSessions]);
 
-  const startBlock = useCallback((block: TimerBlock, taskId?: string, taskName?: string) => {
+  const startBlock = useCallback((block: TimerBlock) => {
     requestNotificationPermission();
     
     const initialTime = block.type === 'rest' 
@@ -153,10 +153,10 @@ export function useTimer() {
       currentCycle: 1,
       isWorkPhase: block.type !== 'rest',
       timeRemaining: initialTime,
-      workDescription: '',
+      workDescription: block.description || '',
       sessionStartTime: new Date(),
-      currentTaskId: taskId,
-      currentTaskName: taskName,
+      currentTaskId: block.id,
+      currentTaskName: block.name,
       accumulatedRestTime: 0,
       skippedBreaksCount: 0,
     };

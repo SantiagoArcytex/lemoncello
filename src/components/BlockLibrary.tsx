@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, ClipboardList, Zap, Play, Phone } from 'lucide-react';
+import { Plus, Zap, Play, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DraggableBlockCard } from './DraggableBlockCard';
 import { CreateBlockModal } from './CreateBlockModal';
-import { TaskPanel } from './TaskPanel';
 import { MinimizedTimerCard } from './MinimizedTimerCard';
-import { TimerBlock, Task, TimerState } from '@/types/blocks';
+import { TimerBlock, TimerState } from '@/types/blocks';
 
 interface BlockLibraryProps {
   blocks: TimerBlock[];
-  onStartBlock: (block: TimerBlock, taskId?: string, taskName?: string) => void;
+  onStartBlock: (block: TimerBlock) => void;
   onUpdateBlock: (id: string, updates: Partial<TimerBlock>) => void;
   onDeleteBlock: (id: string) => void;
   onCreateBlock: (block: Omit<TimerBlock, 'id' | 'createdAt'>) => void;
@@ -18,12 +17,6 @@ interface BlockLibraryProps {
   onQuickStart: () => void;
   onStartCall: () => void;
   todayMinutes: number;
-  tasks: Task[];
-  onAddTask: (title: string, description: string) => void;
-  onCompleteTask: (id: string) => void;
-  onUncompleteTask: (id: string) => void;
-  onDeleteTask: (id: string) => void;
-  hasIncompleteSprint: (taskId: string) => boolean;
   minimizedTimers: TimerState[];
   onResumeMinimized: (timerId: string) => void;
   onStopMinimized: (timerId: string) => void;
@@ -39,24 +32,13 @@ export function BlockLibrary({
   onQuickStart,
   onStartCall,
   todayMinutes,
-  tasks,
-  onAddTask,
-  onCompleteTask,
-  onUncompleteTask,
-  onDeleteTask,
-  hasIncompleteSprint,
   minimizedTimers,
   onResumeMinimized,
   onStopMinimized,
 }: BlockLibraryProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isTaskPanelOpen, setIsTaskPanelOpen] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
-  const handleStartSprintFromTask = (task: Task, block: TimerBlock) => {
-    onStartBlock(block, task.id, task.title);
-  };
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
@@ -171,39 +153,31 @@ export function BlockLibrary({
           </Button>
         </motion.div>
 
-        {/* Quick Actions */}
+        {/* New Task Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="flex gap-3 mb-8"
+          className="mb-8"
         >
           <Button
             variant="outline"
             size="lg"
-            onClick={() => setIsTaskPanelOpen(true)}
-            className="flex-1"
-          >
-            <ClipboardList className="h-4 w-4 mr-2" />
-            Tasks
-          </Button>
-          <Button
-            size="lg"
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex-1"
+            className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Block
+            New Task
           </Button>
         </motion.div>
 
-        {/* Block Library */}
+        {/* Saved Tasks */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <h2 className="text-lg font-semibold text-foreground mb-4">Your Blocks</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Your Tasks</h2>
           <div className="space-y-3">
             {blocks.map((block, index) => (
               <DraggableBlockCard
@@ -230,13 +204,13 @@ export function BlockLibrary({
             className="text-center py-16"
           >
             <div className="text-5xl mb-4">🍋</div>
-            <h3 className="text-lg font-medium text-foreground mb-2">No blocks yet</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">No tasks yet</h3>
             <p className="text-muted-foreground mb-4">
-              Create your first routine block to get started
+              Create your first task to get started
             </p>
             <Button onClick={() => setIsCreateModalOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Block
+              Create Task
             </Button>
           </motion.div>
         )}
@@ -246,19 +220,6 @@ export function BlockLibrary({
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreateBlock={onCreateBlock}
-      />
-
-      <TaskPanel
-        isOpen={isTaskPanelOpen}
-        onClose={() => setIsTaskPanelOpen(false)}
-        tasks={tasks}
-        onAddTask={onAddTask}
-        onCompleteTask={onCompleteTask}
-        onUncompleteTask={onUncompleteTask}
-        onDeleteTask={onDeleteTask}
-        onStartSprint={handleStartSprintFromTask}
-        blocks={blocks}
-        hasIncompleteSprint={hasIncompleteSprint}
       />
     </div>
   );

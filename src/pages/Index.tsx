@@ -11,7 +11,6 @@ import { StopConfirmationModal } from '@/components/StopConfirmationModal';
 import { CancelConfirmationModal } from '@/components/CancelConfirmationModal';
 import { useBlocks } from '@/hooks/useBlocks';
 import { useTimer } from '@/hooks/useTimer';
-import { useTasks } from '@/hooks/useTasks';
 import { useBackgroundNotification } from '@/hooks/useBackgroundNotification';
 import { TimerSession } from '@/types/blocks';
 
@@ -46,18 +45,9 @@ const Index = () => {
     updateWorkDescription,
     getElapsedTime,
     getTodaySessions,
-    hasIncompleteSprint,
     clearSessions,
     addSession,
   } = useTimer();
-  
-  const {
-    tasks,
-    addTask,
-    completeTask,
-    uncompleteTask,
-    deleteTask,
-  } = useTasks();
 
   // Background notification hook
   useBackgroundNotification({
@@ -196,12 +186,6 @@ const Index = () => {
                   onQuickStart={startQuickStart}
                   onStartCall={handleStartCall}
                   todayMinutes={todayMinutes}
-                  tasks={tasks}
-                  onAddTask={addTask}
-                  onCompleteTask={completeTask}
-                  onUncompleteTask={uncompleteTask}
-                  onDeleteTask={deleteTask}
-                  hasIncompleteSprint={hasIncompleteSprint}
                   minimizedTimers={minimizedTimers}
                   onResumeMinimized={handleResumeMinimized}
                   onStopMinimized={handleStopMinimized}
@@ -215,7 +199,7 @@ const Index = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <ReportsView sessions={sessions} tasks={tasks} onClearSessions={clearSessions} />
+              <ReportsView sessions={sessions} tasks={[]} onClearSessions={clearSessions} />
             </motion.div>
           )}
         </AnimatePresence>
