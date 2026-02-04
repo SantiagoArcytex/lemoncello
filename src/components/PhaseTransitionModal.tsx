@@ -1,4 +1,4 @@
-import { Coffee, Play, AlertTriangle } from 'lucide-react';
+import { Coffee, Play, AlertTriangle, Square } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ interface PhaseTransitionModalProps {
   skippedBreaksCount: number;
   onConfirm: () => void;
   onKeepWorking: () => void;
+  onStop: () => void;
 }
 
 export function PhaseTransitionModal({
@@ -42,6 +43,7 @@ export function PhaseTransitionModal({
   skippedBreaksCount,
   onConfirm,
   onKeepWorking,
+  onStop,
 }: PhaseTransitionModalProps) {
   const [showWarning, setShowWarning] = useState(false);
   const isBreakTime = transitionType === 'work-to-break';
@@ -137,6 +139,18 @@ export function PhaseTransitionModal({
               >
                 <Play className="h-4 w-4 mr-2" />
                 Keep Working
+              </Button>
+            )}
+
+            {!isBreakTime && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full text-destructive hover:text-destructive"
+                onClick={onStop}
+              >
+                <Square className="h-4 w-4 mr-2" />
+                Stop Session
               </Button>
             )}
           </div>

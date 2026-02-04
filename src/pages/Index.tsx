@@ -214,6 +214,7 @@ const Index = () => {
           skippedBreaksCount={skippedBreaksCount}
           onConfirm={confirmTransition}
           onKeepWorking={keepWorking}
+          onStop={() => setShowStopModal(true)}
         />
 
         {/* Stop Confirmation Modal */}
