@@ -19,6 +19,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<'timer' | 'reports'>('timer');
   const [showStopModal, setShowStopModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [stoppingTimerId, setStoppingTimerId] = useState<string | null>(null);
   const [callState, setCallState] = useState<{ isActive: boolean; startTime: Date | null }>({
     isActive: false,
     startTime: null,
@@ -27,6 +28,7 @@ const Index = () => {
   const { blocks, addBlock, updateBlock, deleteBlock, reorderBlocks } = useBlocks();
   const {
     timerState,
+    minimizedTimers,
     sessions,
     pendingTransition,
     accumulatedRestTime,
@@ -35,6 +37,8 @@ const Index = () => {
     startQuickStart,
     pauseTimer,
     resumeTimer,
+    minimizeTimer,
+    resumeMinimizedTimer,
     stopTimerWithDescription,
     cancelTimer,
     confirmTransition,
@@ -69,7 +73,8 @@ const Index = () => {
 
   const isTimerActive = timerState.isRunning || timerState.isPaused;
 
-  const handleStopRequest = () => {
+  const handleStopRequest = (timerId?: string) => {
+    setStoppingTimerId(timerId || null);
     setShowStopModal(true);
   };
 
@@ -78,13 +83,22 @@ const Index = () => {
   };
 
   const handleStopConfirm = (description: string) => {
-    stopTimerWithDescription(description);
+    stopTimerWithDescription(description, stoppingTimerId || undefined);
     setShowStopModal(false);
+    setStoppingTimerId(null);
   };
 
   const handleCancelConfirm = () => {
     cancelTimer();
     setShowCancelModal(false);
+  };
+
+  const handleResumeMinimized = (timerId: string) => {
+    resumeMinimizedTimer(timerId);
+  };
+
+  const handleStopMinimized = (timerId: string) => {
+    handleStopRequest(timerId);
   };
 
   // Call tracking handlers
@@ -118,6 +132,11 @@ const Index = () => {
   const handleCancelCall = () => {
     setCallState({ isActive: false, startTime: null });
   };
+
+  // Find the timer being stopped for the modal
+  const stoppingTimer = stoppingTimerId 
+    ? minimizedTimers.find(t => t.id === stoppingTimerId) 
+    : timerState;
 
   return (
     <>
@@ -154,8 +173,9 @@ const Index = () => {
                   timerState={timerState}
                   onPause={pauseTimer}
                   onResume={resumeTimer}
-                  onStop={handleStopRequest}
+                  onStop={() => handleStopRequest()}
                   onCancel={handleCancelRequest}
+                  onMinimize={minimizeTimer}
                   onUpdateDescription={updateWorkDescription}
                 />
               </motion.div>
@@ -182,6 +202,9 @@ const Index = () => {
                   onUncompleteTask={uncompleteTask}
                   onDeleteTask={deleteTask}
                   hasIncompleteSprint={hasIncompleteSprint}
+                  minimizedTimers={minimizedTimers}
+                  onResumeMinimized={handleResumeMinimized}
+                  onStopMinimized={handleStopMinimized}
                 />
               </motion.div>
             )
@@ -220,11 +243,14 @@ const Index = () => {
         {/* Stop Confirmation Modal */}
         <StopConfirmationModal
           isOpen={showStopModal}
-          onClose={() => setShowStopModal(false)}
+          onClose={() => {
+            setShowStopModal(false);
+            setStoppingTimerId(null);
+          }}
           onConfirm={handleStopConfirm}
-          blockName={timerState.currentBlock?.name || ''}
-          elapsedTime={getElapsedTime()}
-          currentDescription={timerState.workDescription}
+          blockName={stoppingTimer?.currentBlock?.name || ''}
+          elapsedTime={stoppingTimerId ? '' : getElapsedTime()}
+          currentDescription={stoppingTimer?.workDescription || ''}
         />
 
         {/* Cancel Confirmation Modal */}

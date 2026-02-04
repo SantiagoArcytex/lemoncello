@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ClipboardList, Zap, Play, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DraggableBlockCard } from './DraggableBlockCard';
 import { CreateBlockModal } from './CreateBlockModal';
 import { TaskPanel } from './TaskPanel';
-import { TimerBlock, Task } from '@/types/blocks';
+import { MinimizedTimerCard } from './MinimizedTimerCard';
+import { TimerBlock, Task, TimerState } from '@/types/blocks';
 
 interface BlockLibraryProps {
   blocks: TimerBlock[];
@@ -23,6 +24,9 @@ interface BlockLibraryProps {
   onUncompleteTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
   hasIncompleteSprint: (taskId: string) => boolean;
+  minimizedTimers: TimerState[];
+  onResumeMinimized: (timerId: string) => void;
+  onStopMinimized: (timerId: string) => void;
 }
 
 export function BlockLibrary({
@@ -41,6 +45,9 @@ export function BlockLibrary({
   onUncompleteTask,
   onDeleteTask,
   hasIncompleteSprint,
+  minimizedTimers,
+  onResumeMinimized,
+  onStopMinimized,
 }: BlockLibraryProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isTaskPanelOpen, setIsTaskPanelOpen] = useState(false);
@@ -93,7 +100,7 @@ export function BlockLibrary({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-8 p-5 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20"
+          className="mb-4 p-5 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20"
         >
           <p className="text-sm text-muted-foreground mb-1">Today's Focus</p>
           <div className="flex items-baseline gap-2">
@@ -107,6 +114,27 @@ export function BlockLibrary({
             <span className="text-lg text-muted-foreground">min</span>
           </div>
         </motion.div>
+
+        {/* Minimized Timers */}
+        <AnimatePresence>
+          {minimizedTimers.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 space-y-3"
+            >
+              {minimizedTimers.map((timer) => (
+                <MinimizedTimerCard
+                  key={timer.id}
+                  timer={timer}
+                  onResume={onResumeMinimized}
+                  onStop={onStopMinimized}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Start Working Button - Main CTA */}
         <motion.div

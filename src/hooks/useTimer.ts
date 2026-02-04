@@ -16,23 +16,27 @@ const QUICK_START_BLOCK: TimerBlock = {
   createdAt: new Date(),
 };
 
+const createEmptyTimerState = (): TimerState => ({
+  id: generateId(),
+  isRunning: false,
+  isPaused: false,
+  isMinimized: false,
+  currentBlock: null,
+  currentCycle: 1,
+  isWorkPhase: true,
+  timeRemaining: 0,
+  workDescription: '',
+  sessionStartTime: null,
+  currentTaskId: undefined,
+  currentTaskName: undefined,
+  accumulatedRestTime: 0,
+  skippedBreaksCount: 0,
+});
+
 export function useTimer() {
   const [sessions, setSessions] = useLocalStorage<TimerSession[]>('lemoncello-sessions', []);
-  const [timerState, setTimerState] = useState<TimerState>({
-    isRunning: false,
-    isPaused: false,
-    currentBlock: null,
-    currentCycle: 1,
-    isWorkPhase: true,
-    timeRemaining: 0,
-    workDescription: '',
-    sessionStartTime: null,
-    currentTaskId: undefined,
-    currentTaskName: undefined,
-  });
-  
-  const [accumulatedRestTime, setAccumulatedRestTime] = useState<number>(0);
-  const [skippedBreaksCount, setSkippedBreaksCount] = useState<number>(0);
+  const [activeTimer, setActiveTimer] = useState<TimerState>(createEmptyTimerState());
+  const [minimizedTimers, setMinimizedTimers] = useState<TimerState[]>([]);
   
   const [pendingTransition, setPendingTransition] = useState<'work-to-break' | 'break-to-work' | null>(null);
 
@@ -93,19 +97,19 @@ export function useTimer() {
   }, []);
 
   const completeSession = useCallback((
-    block: TimerBlock, 
-    description: string, 
-    startTime: Date,
+    timer: TimerState,
+    description: string,
     stoppedByUser: boolean = false,
     timeCompletedBeforeStopping?: number,
-    actualCyclesCompleted?: number
   ) => {
+    if (!timer.currentBlock || !timer.sessionStartTime) return;
+    
+    const block = timer.currentBlock;
     const now = new Date();
-    // For Quick Start (infinite), calculate based on actual time worked, not theoretical cycles
-    const cyclesForCalc = actualCyclesCompleted ?? block.cycles;
+    const cyclesForCalc = timer.currentCycle;
     const expectedDuration = block.type === 'rest' 
       ? block.restDuration 
-      : block.workDuration * Math.min(cyclesForCalc, 100); // Cap at 100 for sanity
+      : block.workDuration * Math.min(cyclesForCalc, 100);
     
     const totalWorkMinutes = stoppedByUser && timeCompletedBeforeStopping !== undefined
       ? timeCompletedBeforeStopping
@@ -115,7 +119,7 @@ export function useTimer() {
       id: generateId(),
       blockId: block.id,
       blockName: block.name,
-      startTime,
+      startTime: timer.sessionStartTime,
       endTime: now,
       totalWorkMinutes,
       workDescription: description,
@@ -124,12 +128,12 @@ export function useTimer() {
       timeCompletedBeforeStopping: stoppedByUser ? timeCompletedBeforeStopping : undefined,
       expectedDuration,
       date: now.toISOString().split('T')[0],
-      taskId: timerState.currentTaskId,
-      taskName: timerState.currentTaskName,
+      taskId: timer.currentTaskId,
+      taskName: timer.currentTaskName,
     };
 
     setSessions(prev => [...prev, session]);
-  }, [setSessions, timerState.currentTaskId, timerState.currentTaskName]);
+  }, [setSessions]);
 
   const startBlock = useCallback((block: TimerBlock, taskId?: string, taskName?: string) => {
     requestNotificationPermission();
@@ -140,9 +144,11 @@ export function useTimer() {
 
     sendNotification('Timer Started! 🚀', `${block.name} - Let's go!`, true);
 
-    setTimerState({
+    const newTimer: TimerState = {
+      id: generateId(),
       isRunning: true,
       isPaused: false,
+      isMinimized: false,
       currentBlock: block,
       currentCycle: 1,
       isWorkPhase: block.type !== 'rest',
@@ -151,74 +157,111 @@ export function useTimer() {
       sessionStartTime: new Date(),
       currentTaskId: taskId,
       currentTaskName: taskName,
-    });
+      accumulatedRestTime: 0,
+      skippedBreaksCount: 0,
+    };
+
+    setActiveTimer(newTimer);
   }, [requestNotificationPermission, sendNotification]);
 
   const pauseTimer = useCallback(() => {
-    setTimerState(prev => ({ ...prev, isPaused: true, isRunning: false }));
+    setActiveTimer(prev => ({ ...prev, isPaused: true, isRunning: false }));
   }, []);
 
   const resumeTimer = useCallback(() => {
     playStartSound();
-    setTimerState(prev => ({ ...prev, isPaused: false, isRunning: true }));
+    setActiveTimer(prev => ({ ...prev, isPaused: false, isRunning: true }));
   }, [playStartSound]);
 
-  const stopTimerWithDescription = useCallback((description: string) => {
-    if (timerState.currentBlock && timerState.sessionStartTime) {
-      const block = timerState.currentBlock;
-      // Calculate actual elapsed time from session start
-      const now = new Date();
-      const actualElapsedMs = now.getTime() - timerState.sessionStartTime.getTime();
-      const timeCompletedMinutes = Math.floor(actualElapsedMs / 60000);
+  const minimizeTimer = useCallback(() => {
+    setActiveTimer(prev => {
+      if (!prev.currentBlock) return prev;
       
-      completeSession(
-        timerState.currentBlock,
-        description,
-        timerState.sessionStartTime,
-        true,
-        timeCompletedMinutes,
-        timerState.currentCycle
-      );
-    }
-    
-    setTimerState({
-      isRunning: false,
-      isPaused: false,
-      currentBlock: null,
-      currentCycle: 1,
-      isWorkPhase: true,
-      timeRemaining: 0,
-      workDescription: '',
-      sessionStartTime: null,
-      currentTaskId: undefined,
-      currentTaskName: undefined,
-    });
-    setPendingTransition(null);
-  }, [timerState, completeSession]);
-
-  const cancelTimer = useCallback(() => {
-    // Cancel without saving - data is lost
-    setTimerState({
-      isRunning: false,
-      isPaused: false,
-      currentBlock: null,
-      currentCycle: 1,
-      isWorkPhase: true,
-      timeRemaining: 0,
-      workDescription: '',
-      sessionStartTime: null,
-      currentTaskId: undefined,
-      currentTaskName: undefined,
+      // Pause and mark as minimized
+      const minimizedTimer: TimerState = {
+        ...prev,
+        isRunning: false,
+        isPaused: true,
+        isMinimized: true,
+      };
+      
+      // Add to minimized timers list
+      setMinimizedTimers(prevMinimized => [...prevMinimized, minimizedTimer]);
+      
+      // Reset active timer
+      return createEmptyTimerState();
     });
     setPendingTransition(null);
   }, []);
 
-  const getElapsedTime = useCallback(() => {
-    if (!timerState.sessionStartTime) return '0 min';
+  const resumeMinimizedTimer = useCallback((timerId: string) => {
+    const timerToResume = minimizedTimers.find(t => t.id === timerId);
+    if (!timerToResume) return;
+
+    // If there's an active timer, minimize it first
+    if (activeTimer.currentBlock) {
+      const currentAsMinimized: TimerState = {
+        ...activeTimer,
+        isRunning: false,
+        isPaused: true,
+        isMinimized: true,
+      };
+      setMinimizedTimers(prev => 
+        prev.filter(t => t.id !== timerId).concat(currentAsMinimized)
+      );
+    } else {
+      // Just remove the resumed timer from minimized list
+      setMinimizedTimers(prev => prev.filter(t => t.id !== timerId));
+    }
+
+    // Restore the timer as active and running
+    playStartSound();
+    setActiveTimer({
+      ...timerToResume,
+      isRunning: true,
+      isPaused: false,
+      isMinimized: false,
+    });
+  }, [minimizedTimers, activeTimer, playStartSound]);
+
+  const stopTimerWithDescription = useCallback((description: string, timerId?: string) => {
+    // If stopping a minimized timer
+    if (timerId) {
+      const timerToStop = minimizedTimers.find(t => t.id === timerId);
+      if (timerToStop && timerToStop.sessionStartTime) {
+        const now = new Date();
+        const actualElapsedMs = now.getTime() - timerToStop.sessionStartTime.getTime();
+        const timeCompletedMinutes = Math.floor(actualElapsedMs / 60000);
+        
+        completeSession(timerToStop, description, true, timeCompletedMinutes);
+        setMinimizedTimers(prev => prev.filter(t => t.id !== timerId));
+      }
+      return;
+    }
+
+    // Stop active timer
+    if (activeTimer.currentBlock && activeTimer.sessionStartTime) {
+      const now = new Date();
+      const actualElapsedMs = now.getTime() - activeTimer.sessionStartTime.getTime();
+      const timeCompletedMinutes = Math.floor(actualElapsedMs / 60000);
+      
+      completeSession(activeTimer, description, true, timeCompletedMinutes);
+    }
     
-    // Calculate actual elapsed time from session start
+    setActiveTimer(createEmptyTimerState());
+    setPendingTransition(null);
+  }, [activeTimer, minimizedTimers, completeSession]);
+
+  const cancelTimer = useCallback(() => {
+    setActiveTimer(createEmptyTimerState());
+    setPendingTransition(null);
+  }, []);
+
+  const getElapsedTime = useCallback(() => {
+    if (!activeTimer.sessionStartTime) return '0 min';
+    
     const now = new Date();
-    const actualElapsedMs = now.getTime() - timerState.sessionStartTime.getTime();
+    const actualElapsedMs = now.getTime() - activeTimer.sessionStartTime.getTime();
     const totalSeconds = Math.floor(actualElapsedMs / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -227,34 +270,34 @@ export function useTimer() {
       return `${hours}h ${minutes % 60}min`;
     }
     return `${minutes} min`;
-  }, [timerState.sessionStartTime]);
+  }, [activeTimer.sessionStartTime]);
 
   const startQuickStart = useCallback(() => {
     startBlock(QUICK_START_BLOCK);
   }, [startBlock]);
 
   const confirmTransition = useCallback(() => {
-    if (!timerState.currentBlock || !pendingTransition) return;
+    if (!activeTimer.currentBlock || !pendingTransition) return;
     
-    const block = timerState.currentBlock;
+    const block = activeTimer.currentBlock;
     
     if (pendingTransition === 'work-to-break') {
       playEndSound();
-      // Use accumulated rest time if any, otherwise use block's rest duration
-      const breakDuration = accumulatedRestTime > 0 ? accumulatedRestTime : block.restDuration;
-      setTimerState(prev => ({
+      const breakDuration = activeTimer.accumulatedRestTime > 0 
+        ? activeTimer.accumulatedRestTime 
+        : block.restDuration;
+      setActiveTimer(prev => ({
         ...prev,
         isRunning: true,
         isPaused: false,
         isWorkPhase: false,
         timeRemaining: breakDuration * 60,
+        accumulatedRestTime: 0,
+        skippedBreaksCount: 0,
       }));
-      // Reset accumulated rest after taking the break
-      setAccumulatedRestTime(0);
-      setSkippedBreaksCount(0);
     } else {
       playStartSound();
-      setTimerState(prev => ({
+      setActiveTimer(prev => ({
         ...prev,
         isRunning: true,
         isPaused: false,
@@ -265,36 +308,35 @@ export function useTimer() {
     }
     
     setPendingTransition(null);
-  }, [timerState.currentBlock, pendingTransition, playEndSound, playStartSound, accumulatedRestTime]);
+  }, [activeTimer.currentBlock, activeTimer.accumulatedRestTime, pendingTransition, playEndSound, playStartSound]);
 
   const keepWorking = useCallback(() => {
-    if (!timerState.currentBlock || pendingTransition !== 'work-to-break') return;
+    if (!activeTimer.currentBlock || pendingTransition !== 'work-to-break') return;
     
-    const block = timerState.currentBlock;
+    const block = activeTimer.currentBlock;
     
-    // Accumulate rest time: first skip adds block.restDuration, subsequent skips add 5 more each
-    const additionalRest = skippedBreaksCount === 0 ? block.restDuration : 5;
-    setAccumulatedRestTime(prev => prev + additionalRest);
-    setSkippedBreaksCount(prev => prev + 1);
+    const additionalRest = activeTimer.skippedBreaksCount === 0 ? block.restDuration : 5;
     
     playStartSound();
-    setTimerState(prev => ({
+    setActiveTimer(prev => ({
       ...prev,
       isRunning: true,
       isPaused: false,
       isWorkPhase: true,
       timeRemaining: block.workDuration * 60,
+      accumulatedRestTime: prev.accumulatedRestTime + additionalRest,
+      skippedBreaksCount: prev.skippedBreaksCount + 1,
     }));
     
     setPendingTransition(null);
-  }, [timerState.currentBlock, pendingTransition, skippedBreaksCount, playStartSound]);
+  }, [activeTimer.currentBlock, activeTimer.skippedBreaksCount, pendingTransition, playStartSound]);
 
   const updateWorkDescription = useCallback((description: string) => {
-    setTimerState(prev => ({ ...prev, workDescription: description }));
+    setActiveTimer(prev => ({ ...prev, workDescription: description }));
   }, []);
 
   const tick = useCallback(() => {
-    setTimerState(prev => {
+    setActiveTimer(prev => {
       if (!prev.isRunning || prev.isPaused || !prev.currentBlock) {
         return prev;
       }
@@ -307,37 +349,20 @@ export function useTimer() {
         if (block.type === 'meeting' || block.type === 'rest') {
           sendNotification('Timer Complete! ✨', `${block.name} has finished.`);
           if (prev.sessionStartTime) {
-            completeSession(block, prev.workDescription, prev.sessionStartTime, false);
+            completeSession(prev, prev.workDescription, false);
           }
-          return {
-            ...prev,
-            isRunning: false,
-            isPaused: false,
-            currentBlock: null,
-            timeRemaining: 0,
-            currentTaskId: undefined,
-            currentTaskName: undefined,
-          };
+          return createEmptyTimerState();
         }
 
         if (prev.isWorkPhase) {
           if (prev.currentCycle >= block.cycles) {
             sendNotification('Block Complete! 🎉', `${block.name} - All cycles finished!`);
             if (prev.sessionStartTime) {
-              completeSession(block, prev.workDescription, prev.sessionStartTime, false);
+              completeSession(prev, prev.workDescription, false);
             }
-            return {
-              ...prev,
-              isRunning: false,
-              isPaused: false,
-              currentBlock: null,
-              timeRemaining: 0,
-              currentTaskId: undefined,
-              currentTaskName: undefined,
-            };
+            return createEmptyTimerState();
           }
           
-          // Pause and show modal for break transition
           sendNotification('Break Time! ☕', `Take a ${block.restDuration} minute break.`);
           setPendingTransition('work-to-break');
           return {
@@ -347,7 +372,6 @@ export function useTimer() {
             timeRemaining: block.restDuration * 60,
           };
         } else {
-          // Pause and show modal for work transition
           sendNotification('Back to Work! 💪', `Starting cycle ${prev.currentCycle + 1}.`);
           setPendingTransition('break-to-work');
           return {
@@ -364,7 +388,7 @@ export function useTimer() {
   }, [sendNotification, completeSession]);
 
   useEffect(() => {
-    if (timerState.isRunning && !timerState.isPaused) {
+    if (activeTimer.isRunning && !activeTimer.isPaused) {
       intervalRef.current = setInterval(tick, 1000);
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -376,7 +400,7 @@ export function useTimer() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [timerState.isRunning, timerState.isPaused, tick]);
+  }, [activeTimer.isRunning, activeTimer.isPaused, tick]);
 
   const getTodaySessions = useCallback(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -407,16 +431,23 @@ export function useTimer() {
     setSessions(prev => [...prev, newSession]);
   }, [setSessions]);
 
+  // Expose timerState for backward compatibility - maps activeTimer to old structure
+  const timerState = activeTimer;
+
   return {
     timerState,
+    activeTimer,
+    minimizedTimers,
     sessions,
     pendingTransition,
-    accumulatedRestTime,
-    skippedBreaksCount,
+    accumulatedRestTime: activeTimer.accumulatedRestTime,
+    skippedBreaksCount: activeTimer.skippedBreaksCount,
     startBlock,
     startQuickStart,
     pauseTimer,
     resumeTimer,
+    minimizeTimer,
+    resumeMinimizedTimer,
     stopTimerWithDescription,
     cancelTimer,
     confirmTransition,

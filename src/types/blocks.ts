@@ -39,8 +39,10 @@ export interface Task {
 }
 
 export interface TimerState {
+  id: string; // Unique ID for this timer instance
   isRunning: boolean;
   isPaused: boolean;
+  isMinimized: boolean;
   currentBlock: TimerBlock | null;
   currentCycle: number;
   isWorkPhase: boolean;
@@ -49,6 +51,8 @@ export interface TimerState {
   sessionStartTime: Date | null;
   currentTaskId?: string;
   currentTaskName?: string;
+  accumulatedRestTime: number;
+  skippedBreaksCount: number;
 }
 
 export const DEFAULT_BLOCKS: Omit<TimerBlock, 'id' | 'createdAt'>[] = [
