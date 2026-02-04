@@ -49,12 +49,12 @@ export function PhaseTransitionModal({
             )}
           </motion.div>
           <DialogTitle className="text-2xl">
-            {isBreakTime ? '¡Hora del Descanso!' : '¡Vamos a Trabajar!'}
+            {isBreakTime ? 'Break Time!' : 'Back to Work!'}
           </DialogTitle>
           <DialogDescription className="text-base mt-2">
             {isBreakTime
-              ? `Has completado tu tiempo de trabajo. Toma un descanso de ${breakDuration} minutos.`
-              : `Descanso terminado. Ciclo ${currentCycle} de ${totalCycles}.`}
+              ? `Great work! Take a ${breakDuration} minute break.`
+              : `Break finished. Cycle ${currentCycle} of ${totalCycles > 100 ? '∞' : totalCycles}.`}
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6">
@@ -67,12 +67,12 @@ export function PhaseTransitionModal({
             {isBreakTime ? (
               <>
                 <Coffee className="h-5 w-5 mr-2" />
-                Iniciar Descanso
+                Start Break
               </>
             ) : (
               <>
                 <Play className="h-5 w-5 mr-2" />
-                Continuar Trabajo
+                Continue Work
               </>
             )}
           </Button>

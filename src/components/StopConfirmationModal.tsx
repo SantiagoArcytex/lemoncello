@@ -45,31 +45,31 @@ export function StopConfirmationModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Square className="h-5 w-5 text-destructive" />
-            Detener {blockName}
+            Stop {blockName}
           </DialogTitle>
           <DialogDescription>
-            Has trabajado {elapsedTime}. ¿En qué estuviste trabajando?
+            You worked for {elapsedTime}. What were you working on?
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <label className="block text-sm font-medium text-muted-foreground mb-2">
-            Descripción del trabajo
+            Work Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe lo que trabajaste..."
+            placeholder="Describe what you worked on..."
             className="w-full h-32 px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             autoFocus
           />
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={handleClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button variant="destructive" onClick={handleConfirm}>
             <Save className="h-4 w-4 mr-2" />
-            Guardar y Detener
+            Save & Stop
           </Button>
         </DialogFooter>
       </DialogContent>
