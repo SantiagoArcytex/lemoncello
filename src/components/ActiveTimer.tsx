@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Square, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Play, Pause, Square, X, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TimerRing } from './TimerRing';
 import { TimerState, TimerBlock } from '@/types/blocks';
@@ -10,6 +10,7 @@ interface ActiveTimerProps {
   onResume: () => void;
   onStop: () => void;
   onCancel: () => void;
+  onMinimize: () => void;
   onUpdateDescription: (desc: string) => void;
 }
 
@@ -42,6 +43,7 @@ export function ActiveTimer({
   onResume,
   onStop,
   onCancel,
+  onMinimize,
   onUpdateDescription,
 }: ActiveTimerProps) {
   if (!timerState.currentBlock) return null;
@@ -106,45 +108,57 @@ export function ActiveTimer({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="flex items-center gap-4 mb-10"
+        className="flex flex-col items-center gap-4 mb-10"
       >
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onCancel}
-          className="h-14 w-14 rounded-full"
-          title="Cancel (lose progress)"
-        >
-          <X className="h-5 w-5" />
-        </Button>
-        
-        <Button
-          variant={timerState.isRunning ? "outline" : "glow"}
-          size="xl"
-          onClick={timerState.isRunning ? onPause : onResume}
-          className="h-16 w-32 rounded-full"
-        >
-          {timerState.isRunning ? (
-            <>
-              <Pause className="h-5 w-5" />
-              Pause
-            </>
-          ) : (
-            <>
-              <Play className="h-5 w-5" />
-              Resume
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onCancel}
+            className="h-14 w-14 rounded-full"
+            title="Cancel (lose progress)"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            variant={timerState.isRunning ? "outline" : "glow"}
+            size="xl"
+            onClick={timerState.isRunning ? onPause : onResume}
+            className="h-16 w-32 rounded-full"
+          >
+            {timerState.isRunning ? (
+              <>
+                <Pause className="h-5 w-5" />
+                Pause
+              </>
+            ) : (
+              <>
+                <Play className="h-5 w-5" />
+                Resume
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onStop}
+            className="h-14 w-14 rounded-full"
+            title="Stop (save progress)"
+          >
+            <Square className="h-5 w-5" />
+          </Button>
+        </div>
 
         <Button
-          variant="outline"
-          size="icon"
-          onClick={onStop}
-          className="h-14 w-14 rounded-full"
-          title="Stop (save progress)"
+          variant="ghost"
+          size="sm"
+          onClick={onMinimize}
+          className="text-muted-foreground hover:text-foreground"
         >
-          <Square className="h-5 w-5" />
+          <Minimize2 className="h-4 w-4 mr-2" />
+          Minimize & Pause
         </Button>
       </motion.div>
 
