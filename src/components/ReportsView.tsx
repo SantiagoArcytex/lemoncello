@@ -39,6 +39,17 @@ function formatTime(date: Date | string): string {
   });
 }
 
+interface SessionDetail {
+  id: string;
+  blockName: string;
+  startTime: Date | string;
+  totalMinutes: number;
+  workDescription: string;
+  stoppedByUser: boolean;
+  timeCompletedBeforeStopping?: number;
+  expectedDuration?: number;
+}
+
 interface TaskReport {
   taskId: string;
   taskName: string;
@@ -47,6 +58,7 @@ interface TaskReport {
   stoppedSprints: number;
   stoppedDetails: { blockName: string; timeCompleted: number; expected: number }[];
   totalMinutes: number;
+  sessions: SessionDetail[];
 }
 
 interface DayReport {
@@ -58,6 +70,7 @@ interface DayReport {
     stoppedCount: number;
     stoppedDetails: { blockName: string; timeCompleted: number; expected: number }[];
     totalMinutes: number;
+    sessions: SessionDetail[];
   };
   totalMinutes: number;
 }
@@ -81,6 +94,7 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
             stoppedCount: 0,
             stoppedDetails: [],
             totalMinutes: 0,
+            sessions: [],
           },
           totalMinutes: 0,
         };
@@ -100,9 +114,22 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
             stoppedSprints: 0,
             stoppedDetails: [],
             totalMinutes: 0,
+            sessions: [],
           };
           dayReport.tasks.push(taskReport);
         }
+
+        // Add session detail
+        taskReport.sessions.push({
+          id: session.id,
+          blockName: session.blockName,
+          startTime: session.startTime,
+          totalMinutes: session.totalWorkMinutes,
+          workDescription: session.workDescription,
+          stoppedByUser: session.stoppedByUser || false,
+          timeCompletedBeforeStopping: session.timeCompletedBeforeStopping,
+          expectedDuration: session.expectedDuration,
+        });
 
         taskReport.timerTypes.add(session.blockName);
         taskReport.totalMinutes += session.totalWorkMinutes;
@@ -121,6 +148,18 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
         const taskless = dayReport.tasklessSprints;
         taskless.timerTypes.add(session.blockName);
         taskless.totalMinutes += session.totalWorkMinutes;
+
+        // Add session detail
+        taskless.sessions.push({
+          id: session.id,
+          blockName: session.blockName,
+          startTime: session.startTime,
+          totalMinutes: session.totalWorkMinutes,
+          workDescription: session.workDescription,
+          stoppedByUser: session.stoppedByUser || false,
+          timeCompletedBeforeStopping: session.timeCompletedBeforeStopping,
+          expectedDuration: session.expectedDuration,
+        });
 
         if (session.stoppedByUser) {
           taskless.stoppedCount++;
@@ -300,28 +339,50 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
                             ))}
                           </div>
 
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                             {taskReport.completedSprints > 0 && (
                               <span className="flex items-center gap-1">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <CheckCircle className="h-4 w-4 text-primary" />
                                 {taskReport.completedSprints} completed
                               </span>
                             )}
                             {taskReport.stoppedSprints > 0 && (
                               <span className="flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4 text-amber-500" />
+                                <AlertCircle className="h-4 w-4 text-warning" />
                                 {taskReport.stoppedSprints} stopped
                               </span>
                             )}
                           </div>
 
-                          {taskReport.stoppedDetails.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-border">
-                              <p className="text-xs text-muted-foreground mb-2">Stopped sprints:</p>
-                              {taskReport.stoppedDetails.map((detail, i) => (
-                                <p key={i} className="text-xs text-muted-foreground">
-                                  • {detail.blockName}: {detail.timeCompleted}min of {detail.expected}min
-                                </p>
+                          {/* Individual Sessions */}
+                          {taskReport.sessions.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-border space-y-2">
+                              <p className="text-xs text-muted-foreground font-medium mb-2">Sessions:</p>
+                              {taskReport.sessions.map((session) => (
+                                <div key={session.id} className="bg-secondary/50 rounded-lg p-3">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs text-muted-foreground">
+                                      {formatTime(session.startTime)} • {session.blockName}
+                                    </span>
+                                    <span className="text-sm font-medium text-foreground">
+                                      {session.stoppedByUser 
+                                        ? `${session.timeCompletedBeforeStopping || 0}min / ${session.expectedDuration || 0}min`
+                                        : `${session.totalMinutes}min`
+                                      }
+                                    </span>
+                                  </div>
+                                  {session.workDescription && (
+                                    <p className="text-sm text-foreground mt-1">
+                                      {session.workDescription}
+                                    </p>
+                                  )}
+                                  {session.stoppedByUser && (
+                                    <span className="inline-flex items-center gap-1 text-xs text-warning mt-1">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Stopped early
+                                    </span>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           )}
@@ -359,28 +420,50 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                       {currentDayReport.tasklessSprints.completedCount > 0 && (
                         <span className="flex items-center gap-1">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-primary" />
                           {currentDayReport.tasklessSprints.completedCount} completed
                         </span>
                       )}
                       {currentDayReport.tasklessSprints.stoppedCount > 0 && (
                         <span className="flex items-center gap-1">
-                          <AlertCircle className="h-4 w-4 text-amber-500" />
+                          <AlertCircle className="h-4 w-4 text-warning" />
                           {currentDayReport.tasklessSprints.stoppedCount} stopped
                         </span>
                       )}
                     </div>
 
-                    {currentDayReport.tasklessSprints.stoppedDetails.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-border">
-                        <p className="text-xs text-muted-foreground mb-2">Stopped sprints:</p>
-                        {currentDayReport.tasklessSprints.stoppedDetails.map((detail, i) => (
-                          <p key={i} className="text-xs text-muted-foreground">
-                            • {detail.blockName}: {detail.timeCompleted}min of {detail.expected}min
-                          </p>
+                    {/* Individual Sessions */}
+                    {currentDayReport.tasklessSprints.sessions.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-border space-y-2">
+                        <p className="text-xs text-muted-foreground font-medium mb-2">Sessions:</p>
+                        {currentDayReport.tasklessSprints.sessions.map((session) => (
+                          <div key={session.id} className="bg-secondary/50 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-muted-foreground">
+                                {formatTime(session.startTime)} • {session.blockName}
+                              </span>
+                              <span className="text-sm font-medium text-foreground">
+                                {session.stoppedByUser 
+                                  ? `${session.timeCompletedBeforeStopping || 0}min / ${session.expectedDuration || 0}min`
+                                  : `${session.totalMinutes}min`
+                                }
+                              </span>
+                            </div>
+                            {session.workDescription && (
+                              <p className="text-sm text-foreground mt-1">
+                                {session.workDescription}
+                              </p>
+                            )}
+                            {session.stoppedByUser && (
+                              <span className="inline-flex items-center gap-1 text-xs text-warning mt-1">
+                                <AlertCircle className="h-3 w-3" />
+                                Stopped early
+                              </span>
+                            )}
+                          </div>
                         ))}
                       </div>
                     )}
