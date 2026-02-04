@@ -60,6 +60,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        call: {
+          DEFAULT: "hsl(var(--call))",
+          foreground: "hsl(var(--call-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

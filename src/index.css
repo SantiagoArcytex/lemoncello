@@ -39,6 +39,10 @@
 
     --radius: 0.75rem;
 
+    /* Call Tracker - Bluish Green */
+    --call: 168 80% 45%;
+    --call-foreground: 0 0% 100%;
+
     /* Custom Lemoncello tokens */
     --glow-primary: 0 0 30px hsl(75 100% 50% / 0.4);
     --glow-subtle: 0 0 20px hsl(75 100% 50% / 0.2);

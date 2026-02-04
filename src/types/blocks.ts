@@ -1,4 +1,4 @@
-export type BlockType = 'pomodoro' | 'meeting' | 'rest' | 'custom';
+export type BlockType = 'pomodoro' | 'meeting' | 'rest' | 'custom' | 'call';
 
 export interface TimerBlock {
   id: string;

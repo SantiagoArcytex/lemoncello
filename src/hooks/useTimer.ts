@@ -369,6 +369,14 @@ export function useTimer() {
     setSessions([]);
   }, [setSessions]);
 
+  const addSession = useCallback((session: Omit<TimerSession, 'id'>) => {
+    const newSession: TimerSession = {
+      ...session,
+      id: generateId(),
+    };
+    setSessions(prev => [...prev, newSession]);
+  }, [setSessions]);
+
   return {
     timerState,
     sessions,
@@ -387,5 +395,6 @@ export function useTimer() {
     getSessionsByTask,
     hasIncompleteSprint,
     clearSessions,
+    addSession,
   };
 }
