@@ -32,6 +32,8 @@ export function DraggableBlockCard({
 }: DraggableBlockCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValues, setEditValues] = useState({
+    name: block.name,
+    description: block.description || '',
     workDuration: block.workDuration,
     restDuration: block.restDuration,
     cycles: block.cycles,
@@ -39,7 +41,13 @@ export function DraggableBlockCard({
   const dragRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
-    onUpdate(block.id, editValues);
+    onUpdate(block.id, {
+      name: editValues.name,
+      description: editValues.description,
+      workDuration: editValues.workDuration,
+      restDuration: editValues.restDuration,
+      cycles: editValues.cycles,
+    });
     setIsEditing(false);
   };
 
@@ -145,6 +153,28 @@ export function DraggableBlockCard({
               exit={{ opacity: 0, height: 0 }}
               className="space-y-3"
             >
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-muted-foreground w-20">Name</label>
+                <input
+                  type="text"
+                  value={editValues.name}
+                  onChange={(e) => setEditValues(v => ({ ...v, name: e.target.value }))}
+                  className="flex-1 h-9 px-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Task name"
+                />
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-muted-foreground w-20">Description</label>
+                <input
+                  type="text"
+                  value={editValues.description}
+                  onChange={(e) => setEditValues(v => ({ ...v, description: e.target.value }))}
+                  className="flex-1 h-9 px-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Optional description"
+                />
+              </div>
+
               {block.type !== 'rest' && (
                 <div className="flex items-center gap-3">
                   <label className="text-sm text-muted-foreground w-20">Work</label>

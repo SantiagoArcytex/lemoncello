@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
-import { Play, Pause, Square, X, Minimize2 } from 'lucide-react';
+import { Play, Pause, Square, X, Minimize2, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { TimerRing } from './TimerRing';
 import { TimerState, TimerBlock } from '@/types/blocks';
+import { useState } from 'react';
 
 interface ActiveTimerProps {
   timerState: TimerState;
@@ -12,6 +14,7 @@ interface ActiveTimerProps {
   onCancel: () => void;
   onMinimize: () => void;
   onUpdateDescription: (desc: string) => void;
+  onUpdateTitle: (title: string) => void;
 }
 
 function formatTime(seconds: number): string {
@@ -45,12 +48,28 @@ export function ActiveTimer({
   onCancel,
   onMinimize,
   onUpdateDescription,
+  onUpdateTitle,
 }: ActiveTimerProps) {
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+
   if (!timerState.currentBlock) return null;
 
   const block = timerState.currentBlock;
   const totalDuration = getTotalDuration(block, timerState.isWorkPhase);
   const progress = 1 - timerState.timeRemaining / totalDuration;
+
+  const handleStartEditTitle = () => {
+    setEditedTitle(block.name);
+    setIsEditingTitle(true);
+  };
+
+  const handleSaveTitle = () => {
+    if (editedTitle.trim()) {
+      onUpdateTitle(editedTitle.trim());
+    }
+    setIsEditingTitle(false);
+  };
 
   return (
     <motion.div
@@ -67,7 +86,42 @@ export function ActiveTimer({
         className="text-center mb-8"
       >
         <span className="text-4xl mb-2">{block.icon}</span>
-        <h2 className="text-2xl font-bold text-foreground">{block.name}</h2>
+        <div className="flex items-center justify-center gap-2">
+          {isEditingTitle ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                className="text-2xl font-bold text-center h-10 w-48"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveTitle();
+                  if (e.key === 'Escape') setIsEditingTitle(false);
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleSaveTitle}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group">
+              <h2 className="text-2xl font-bold text-foreground">{block.name}</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={handleStartEditTitle}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
         <p className={`text-lg font-medium mt-1 ${timerState.isWorkPhase ? 'text-primary' : 'text-muted-foreground'}`}>
           {getPhaseLabel(timerState)}
         </p>
