@@ -335,13 +335,23 @@ export function useTimer() {
     setActiveTimer(prev => ({ ...prev, workDescription: description }));
   }, []);
 
-  const updateBlockTitle = useCallback((title: string) => {
+const updateBlockTitle = useCallback((title: string) => {
     setActiveTimer(prev => {
       if (!prev.currentBlock) return prev;
       return {
         ...prev,
         currentBlock: { ...prev.currentBlock, name: title },
         currentTaskName: title,
+      };
+    });
+  }, []);
+
+  const updateBlockIcon = useCallback((icon: string) => {
+    setActiveTimer(prev => {
+      if (!prev.currentBlock) return prev;
+      return {
+        ...prev,
+        currentBlock: { ...prev.currentBlock, icon },
       };
     });
   }, []);
@@ -465,6 +475,7 @@ export function useTimer() {
     keepWorking,
     updateWorkDescription,
     updateBlockTitle,
+    updateBlockIcon,
     getElapsedTime,
     getTodaySessions,
     getSessionsByDate,

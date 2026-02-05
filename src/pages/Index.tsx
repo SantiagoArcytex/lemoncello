@@ -44,6 +44,7 @@ const Index = () => {
     keepWorking,
     updateWorkDescription,
     updateBlockTitle,
+    updateBlockIcon,
     getElapsedTime,
     getTodaySessions,
     clearSessions,
@@ -169,6 +170,7 @@ const Index = () => {
                   onMinimize={minimizeTimer}
                   onUpdateDescription={updateWorkDescription}
                   onUpdateTitle={updateBlockTitle}
+                  onUpdateIcon={updateBlockIcon}
                 />
               </motion.div>
             ) : (

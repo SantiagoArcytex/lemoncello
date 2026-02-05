@@ -4,14 +4,13 @@ import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BlockType, TimerBlock } from '@/types/blocks';
+import { IconPicker } from './IconPicker';
 
 interface CreateBlockModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateBlock: (block: Omit<TimerBlock, 'id' | 'createdAt'>) => void;
 }
-
-const ICONS = ['🎯', '🧠', '📞', '☕', '💻', '✏️', '📚', '🎨', '🏃', '🧘'];
 
 const BLOCK_TYPES: { value: BlockType; label: string; description: string }[] = [
   { value: 'pomodoro', label: 'Pomodoro', description: 'Work/rest cycles' },
@@ -80,18 +79,26 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
               </CardHeader>
               
               <CardContent className="space-y-5">
-                {/* Name Input */}
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">
-                    Task Name
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., Morning Focus"
-                    className="w-full h-11 px-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+                {/* Icon and Name Row */}
+                <div className="flex items-start gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
+                      Icon
+                    </label>
+                    <IconPicker value={icon} onChange={setIcon} size="md" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
+                      Task Name
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g., Morning Focus"
+                      className="w-full h-10 px-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
                 </div>
 
                 {/* Description Input */}
@@ -106,28 +113,6 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
                     rows={2}
                     className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                   />
-                </div>
-
-                {/* Icon Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">
-                    Icon
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {ICONS.map((i) => (
-                      <button
-                        key={i}
-                        onClick={() => setIcon(i)}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all ${
-                          icon === i
-                            ? 'bg-primary text-primary-foreground scale-110'
-                            : 'bg-secondary hover:bg-muted'
-                        }`}
-                      >
-                        {i}
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Block Type */}
