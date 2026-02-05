@@ -4,6 +4,7 @@ import { Play, Settings2, Trash2, Clock, RotateCcw, GripVertical } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TimerBlock } from '@/types/blocks';
+import { IconPicker } from './IconPicker';
 
 interface DraggableBlockCardProps {
   block: TimerBlock;
@@ -16,6 +17,22 @@ interface DraggableBlockCardProps {
   onDragEnd: () => void;
   isDragging: boolean;
   isDragOver: boolean;
+}
+
+function TaskIcon({ icon }: { icon?: string }) {
+  const iconValue = icon || '🎯';
+  const isImageUrl = iconValue.startsWith('data:') || iconValue.startsWith('http') || iconValue.startsWith('/');
+  
+  if (isImageUrl) {
+    return (
+      <img 
+        src={iconValue} 
+        alt="Task icon" 
+        className="w-8 h-8 object-cover rounded-md"
+      />
+    );
+  }
+  return <span className="text-2xl">{iconValue}</span>;
 }
 
 export function DraggableBlockCard({
@@ -34,6 +51,7 @@ export function DraggableBlockCard({
   const [editValues, setEditValues] = useState({
     name: block.name,
     description: block.description || '',
+    icon: block.icon || '🎯',
     workDuration: block.workDuration,
     restDuration: block.restDuration,
     cycles: block.cycles,
@@ -44,6 +62,7 @@ export function DraggableBlockCard({
     onUpdate(block.id, {
       name: editValues.name,
       description: editValues.description,
+      icon: editValues.icon,
       workDuration: editValues.workDuration,
       restDuration: editValues.restDuration,
       cycles: editValues.cycles,
@@ -115,7 +134,7 @@ export function DraggableBlockCard({
               >
                 <GripVertical className="h-5 w-5" />
               </div>
-              <span className="text-2xl">{block.icon}</span>
+              <TaskIcon icon={block.icon} />
               <div className="flex-1 min-w-0">
                 <CardTitle className="text-lg">{block.name}</CardTitle>
                 {block.description && (
@@ -153,6 +172,15 @@ export function DraggableBlockCard({
               exit={{ opacity: 0, height: 0 }}
               className="space-y-3"
             >
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-muted-foreground w-20">Icon</label>
+                <IconPicker 
+                  value={editValues.icon} 
+                  onChange={(icon) => setEditValues(v => ({ ...v, icon }))}
+                  size="sm"
+                />
+              </div>
+              
               <div className="flex items-center gap-3">
                 <label className="text-sm text-muted-foreground w-20">Name</label>
                 <input

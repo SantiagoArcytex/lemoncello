@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { TimerRing } from './TimerRing';
 import { TimerState, TimerBlock } from '@/types/blocks';
 import { useState } from 'react';
+import { IconPicker } from './IconPicker';
 
 interface ActiveTimerProps {
   timerState: TimerState;
@@ -15,6 +16,7 @@ interface ActiveTimerProps {
   onMinimize: () => void;
   onUpdateDescription: (desc: string) => void;
   onUpdateTitle: (title: string) => void;
+  onUpdateIcon: (icon: string) => void;
 }
 
 function formatTime(seconds: number): string {
@@ -40,6 +42,22 @@ function getTotalDuration(block: TimerBlock, isWorkPhase: boolean): number {
   return isWorkPhase ? block.workDuration * 60 : block.restDuration * 60;
 }
 
+function TaskIcon({ icon }: { icon?: string }) {
+  const iconValue = icon || '🎯';
+  const isImageUrl = iconValue.startsWith('data:') || iconValue.startsWith('http') || iconValue.startsWith('/');
+  
+  if (isImageUrl) {
+    return (
+      <img 
+        src={iconValue} 
+        alt="Task icon" 
+        className="w-12 h-12 object-cover rounded-lg"
+      />
+    );
+  }
+  return <span className="text-4xl">{iconValue}</span>;
+}
+
 export function ActiveTimer({
   timerState,
   onPause,
@@ -49,9 +67,11 @@ export function ActiveTimer({
   onMinimize,
   onUpdateDescription,
   onUpdateTitle,
+  onUpdateIcon,
 }: ActiveTimerProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+  const [isEditingIcon, setIsEditingIcon] = useState(false);
 
   if (!timerState.currentBlock) return null;
 
@@ -71,6 +91,11 @@ export function ActiveTimer({
     setIsEditingTitle(false);
   };
 
+  const handleIconChange = (icon: string) => {
+    onUpdateIcon(icon);
+    setIsEditingIcon(false);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -85,8 +110,23 @@ export function ActiveTimer({
         transition={{ delay: 0.1 }}
         className="text-center mb-8"
       >
-        <span className="text-4xl mb-2">{block.icon}</span>
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex justify-center mb-2">
+          {isEditingIcon ? (
+            <IconPicker 
+              value={block.icon || '🎯'} 
+              onChange={handleIconChange}
+              size="lg"
+            />
+          ) : (
+            <button
+              onClick={() => setIsEditingIcon(true)}
+              className="hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <TaskIcon icon={block.icon} />
+            </button>
+          )}
+        </div>
+        <div className="relative flex items-center justify-center">
           {isEditingTitle ? (
             <div className="flex items-center gap-2">
               <Input
@@ -109,17 +149,17 @@ export function ActiveTimer({
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 group">
+            <>
               <h2 className="text-2xl font-bold text-foreground">{block.name}</h2>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-8 w-8 absolute -right-10 opacity-0 hover:opacity-100 focus:opacity-100"
                 onClick={handleStartEditTitle}
               >
                 <Pencil className="h-4 w-4" />
               </Button>
-            </div>
+            </>
           )}
         </div>
         <p className={`text-lg font-medium mt-1 ${timerState.isWorkPhase ? 'text-primary' : 'text-muted-foreground'}`}>
