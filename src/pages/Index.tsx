@@ -43,6 +43,7 @@ const Index = () => {
     confirmTransition,
     keepWorking,
     updateWorkDescription,
+    updateBlockTitle,
     getElapsedTime,
     getTodaySessions,
     clearSessions,
@@ -167,6 +168,7 @@ const Index = () => {
                   onCancel={handleCancelRequest}
                   onMinimize={minimizeTimer}
                   onUpdateDescription={updateWorkDescription}
+                  onUpdateTitle={updateBlockTitle}
                 />
               </motion.div>
             ) : (
