@@ -102,7 +102,7 @@ export function PhaseTransitionModal({
             <DialogDescription className="text-base mt-2">
               {isBreakTime
                 ? `Great work! Take a ${displayBreakDuration} minute break.`
-                : `Break finished. Cycle ${currentCycle} of ${totalCycles > 100 ? '∞' : totalCycles}.`}
+                : `Break's over! Ready for another shot?`}
             </DialogDescription>
             {isBreakTime && accumulatedRestTime > 0 && (
               <p className="text-sm text-muted-foreground mt-1">

@@ -186,10 +186,10 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
   }, [dayReports, selectedDate]);
 
   const exportToCSV = () => {
-    const headers = ['Date', 'Task', 'Block Name', 'Start Time', 'End Time', 'Status', 'Time Worked (min)', 'Expected (min)', 'Description'];
+    const headers = ['Date', 'Shot', 'Block Name', 'Start Time', 'End Time', 'Status', 'Time Worked (min)', 'Expected (min)', 'Description'];
     const rows = sessions.map((s) => [
       s.date,
-      s.taskName || 'No task',
+      s.taskName || 'Quick shot',
       s.blockName,
       new Date(s.startTime).toISOString(),
       s.endTime ? new Date(s.endTime).toISOString() : '',
@@ -293,7 +293,7 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Tasks Worked</p>
+                    <p className="text-sm text-muted-foreground">Shots Taken</p>
                     <p className="text-3xl font-bold text-foreground">
                       {currentDayReport.tasks.length}
                     </p>
@@ -307,7 +307,7 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
               <div>
                 <h3 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Tasks
+                  Shots
                 </h3>
                 <div className="space-y-3">
                   {currentDayReport.tasks.map((taskReport, index) => (
@@ -400,7 +400,7 @@ export function ReportsView({ sessions, tasks, onClearSessions }: ReportsViewPro
               <div>
                 <h3 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  Sprints Without Task
+                  Quick Shots
                 </h3>
                 <Card>
                   <CardContent className="p-4">

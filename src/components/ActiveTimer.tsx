@@ -50,7 +50,7 @@ function TaskIcon({ icon }: { icon?: string }) {
     return (
       <img 
         src={iconValue} 
-        alt="Task icon" 
+        alt="Shot icon" 
         className="w-12 h-12 object-cover rounded-lg"
       />
     );

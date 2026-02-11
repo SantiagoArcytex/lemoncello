@@ -27,7 +27,7 @@ function TaskIcon({ icon }: { icon?: string }) {
     return (
       <img 
         src={iconValue} 
-        alt="Task icon" 
+        alt="Shot icon" 
         className="w-8 h-8 object-cover rounded-md"
       />
     );
@@ -188,7 +188,7 @@ export function DraggableBlockCard({
                   value={editValues.name}
                   onChange={(e) => setEditValues(v => ({ ...v, name: e.target.value }))}
                   className="flex-1 h-9 px-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Task name"
+                  placeholder="Shot name"
                 />
               </div>
               
