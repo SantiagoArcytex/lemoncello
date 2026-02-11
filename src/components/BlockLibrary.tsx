@@ -74,7 +74,7 @@ export function BlockLibrary({
             <Zap className="h-8 w-8 stroke-animated" />
             <h1 className="text-3xl font-bold text-gradient-stroke">Lemoncello</h1>
           </div>
-          <p className="text-muted-foreground">Your productivity powerhouse</p>
+          <p className="text-muted-foreground">Take your shots, one at a time 🍋</p>
         </div>
 
         {/* Today's Stats */}
@@ -153,7 +153,7 @@ export function BlockLibrary({
           </Button>
         </motion.div>
 
-        {/* New Task Button */}
+        {/* New Shot Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -167,7 +167,7 @@ export function BlockLibrary({
             className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Task
+            New Shot
           </Button>
         </motion.div>
 
@@ -177,7 +177,7 @@ export function BlockLibrary({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <h2 className="text-lg font-semibold text-foreground mb-4">Your Tasks</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Take a Shot! 🍋</h2>
           <div className="space-y-3">
             {blocks.map((block, index) => (
               <DraggableBlockCard
@@ -204,13 +204,13 @@ export function BlockLibrary({
             className="text-center py-16"
           >
             <div className="text-5xl mb-4">🍋</div>
-            <h3 className="text-lg font-medium text-foreground mb-2">No tasks yet</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">No shots yet</h3>
             <p className="text-muted-foreground mb-4">
-              Create your first task to get started
+              Create your first shot to get started
             </p>
             <Button onClick={() => setIsCreateModalOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Task
+              Create Shot
             </Button>
           </motion.div>
         )}

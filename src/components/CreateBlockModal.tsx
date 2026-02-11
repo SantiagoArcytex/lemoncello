@@ -71,7 +71,7 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
             <Card className="border-primary/20">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle>New Task</CardTitle>
+                  <CardTitle>New Shot</CardTitle>
                   <Button variant="ghost" size="icon" onClick={onClose}>
                     <X className="h-4 w-4" />
                   </Button>
@@ -88,8 +88,8 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
                     <IconPicker value={icon} onChange={setIcon} size="md" />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">
-                      Task Name
+                     <label className="block text-sm font-medium text-muted-foreground mb-2">
+                      Shot Name
                     </label>
                     <input
                       type="text"
@@ -189,14 +189,14 @@ export function CreateBlockModal({ isOpen, onClose, onCreateBlock }: CreateBlock
                 </div>
 
                 {/* Create Button */}
-                <Button
+                 <Button
                   onClick={handleCreate}
                   disabled={!name.trim()}
                   className="w-full"
                   size="lg"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Task
+                  Create Shot
                 </Button>
               </CardContent>
             </Card>

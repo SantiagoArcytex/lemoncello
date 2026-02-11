@@ -376,14 +376,7 @@ const updateBlockTitle = useCallback((title: string) => {
         }
 
         if (prev.isWorkPhase) {
-          if (prev.currentCycle >= block.cycles) {
-            sendNotification('Block Complete! 🎉', `${block.name} - All cycles finished!`);
-            if (prev.sessionStartTime) {
-              completeSession(prev, prev.workDescription, false);
-            }
-            return createEmptyTimerState();
-          }
-          
+          // Always offer break after work - user can choose to continue or stop after break
           sendNotification('Break Time! ☕', `Take a ${block.restDuration} minute break.`);
           setPendingTransition('work-to-break');
           return {
@@ -393,7 +386,8 @@ const updateBlockTitle = useCallback((title: string) => {
             timeRemaining: block.restDuration * 60,
           };
         } else {
-          sendNotification('Back to Work! 💪', `Starting cycle ${prev.currentCycle + 1}.`);
+          // After break, offer to continue with next cycle or stop
+          sendNotification('Back to Work! 💪', `Ready for the next shot?`);
           setPendingTransition('break-to-work');
           return {
             ...prev,
