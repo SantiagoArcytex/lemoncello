@@ -1,6 +1,7 @@
 import { Coffee, Play, AlertTriangle, Square } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { getRandomPhrase } from '@/lib/lemonPhrases';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -47,6 +48,7 @@ export function PhaseTransitionModal({
 }: PhaseTransitionModalProps) {
   const [showWarning, setShowWarning] = useState(false);
   const isBreakTime = transitionType === 'work-to-break';
+  const phrase = useMemo(() => getRandomPhrase(), [isOpen]);
   
   // Calculate the break duration to display
   const displayBreakDuration = accumulatedRestTime > 0 ? accumulatedRestTime : breakDuration;
@@ -104,6 +106,7 @@ export function PhaseTransitionModal({
                 ? `Great work! Take a ${displayBreakDuration} minute break.`
                 : `Break's over! Ready for another shot?`}
             </DialogDescription>
+            <p className="text-sm text-muted-foreground mt-2">{phrase}</p>
             {isBreakTime && accumulatedRestTime > 0 && (
               <p className="text-sm text-muted-foreground mt-1">
                 (You've skipped {skippedBreaksCount} break{skippedBreaksCount > 1 ? 's' : ''} - rest time accumulated!)

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TimerRing } from './TimerRing';
 import { TimerState, TimerBlock } from '@/types/blocks';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { getRandomPhrase } from '@/lib/lemonPhrases';
 import { IconPicker } from './IconPicker';
 
 interface ActiveTimerProps {
@@ -72,6 +73,7 @@ export function ActiveTimer({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const [isEditingIcon, setIsEditingIcon] = useState(false);
+  const phrase = useMemo(() => getRandomPhrase(), [timerState.currentCycle, timerState.isWorkPhase]);
 
   if (!timerState.currentBlock) return null;
 
@@ -165,6 +167,7 @@ export function ActiveTimer({
         <p className={`text-lg font-medium mt-1 ${timerState.isWorkPhase ? 'text-primary' : 'text-muted-foreground'}`}>
           {getPhaseLabel(timerState)}
         </p>
+        <p className="text-sm text-muted-foreground mt-1">{phrase}</p>
       </motion.div>
 
       {/* Timer Ring */}
