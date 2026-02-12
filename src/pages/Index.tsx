@@ -12,6 +12,7 @@ import { CancelConfirmationModal } from '@/components/CancelConfirmationModal';
 import { useBlocks } from '@/hooks/useBlocks';
 import { useTimer } from '@/hooks/useTimer';
 import { useBackgroundNotification } from '@/hooks/useBackgroundNotification';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import { TimerSession } from '@/types/blocks';
 
 const Index = () => {
@@ -42,6 +43,7 @@ const Index = () => {
     cancelTimer,
     confirmTransition,
     keepWorking,
+    skipBreak,
     updateWorkDescription,
     updateBlockTitle,
     updateBlockIcon,
@@ -58,6 +60,9 @@ const Index = () => {
     blockName: callState.isActive ? 'Call in Progress' : (timerState.currentBlock?.name || ''),
     isWorkPhase: timerState.isWorkPhase,
   });
+
+  // Keep screen on during active timers
+  useWakeLock(timerState.isRunning || callState.isActive);
 
   const todayMinutes = useMemo(() => {
     return getTodaySessions().reduce((sum, s) => sum + s.totalWorkMinutes, 0);
@@ -171,6 +176,7 @@ const Index = () => {
                   onUpdateDescription={updateWorkDescription}
                   onUpdateTitle={updateBlockTitle}
                   onUpdateIcon={updateBlockIcon}
+                  onSkipBreak={skipBreak}
                 />
               </motion.div>
             ) : (

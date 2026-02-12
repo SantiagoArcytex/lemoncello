@@ -283,9 +283,7 @@ export function useTimer() {
     
     if (pendingTransition === 'work-to-break') {
       playEndSound();
-      const breakDuration = activeTimer.accumulatedRestTime > 0 
-        ? activeTimer.accumulatedRestTime 
-        : block.restDuration;
+      const breakDuration = block.restDuration + activeTimer.accumulatedRestTime;
       setActiveTimer(prev => ({
         ...prev,
         isRunning: true,
@@ -315,8 +313,6 @@ export function useTimer() {
     
     const block = activeTimer.currentBlock;
     
-    const additionalRest = activeTimer.skippedBreaksCount === 0 ? block.restDuration : 5;
-    
     playStartSound();
     setActiveTimer(prev => ({
       ...prev,
@@ -324,12 +320,27 @@ export function useTimer() {
       isPaused: false,
       isWorkPhase: true,
       timeRemaining: block.workDuration * 60,
-      accumulatedRestTime: prev.accumulatedRestTime + additionalRest,
+      accumulatedRestTime: prev.accumulatedRestTime + block.restDuration,
       skippedBreaksCount: prev.skippedBreaksCount + 1,
     }));
     
     setPendingTransition(null);
-  }, [activeTimer.currentBlock, activeTimer.skippedBreaksCount, pendingTransition, playStartSound]);
+  }, [activeTimer.currentBlock, pendingTransition, playStartSound]);
+
+  const skipBreak = useCallback(() => {
+    if (!activeTimer.currentBlock || !activeTimer.isWorkPhase === true) return;
+    
+    const block = activeTimer.currentBlock;
+    playStartSound();
+    setActiveTimer(prev => ({
+      ...prev,
+      isRunning: true,
+      isPaused: false,
+      isWorkPhase: true,
+      currentCycle: prev.currentCycle + 1,
+      timeRemaining: block.workDuration * 60,
+    }));
+  }, [activeTimer.currentBlock, playStartSound]);
 
   const updateWorkDescription = useCallback((description: string) => {
     setActiveTimer(prev => ({ ...prev, workDescription: description }));
@@ -467,6 +478,7 @@ const updateBlockTitle = useCallback((title: string) => {
     cancelTimer,
     confirmTransition,
     keepWorking,
+    skipBreak,
     updateWorkDescription,
     updateBlockTitle,
     updateBlockIcon,

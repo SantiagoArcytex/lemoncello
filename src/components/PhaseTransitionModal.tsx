@@ -51,11 +51,9 @@ export function PhaseTransitionModal({
   const phrase = useMemo(() => getRandomPhrase(), [isOpen]);
   
   // Calculate the break duration to display
-  const displayBreakDuration = accumulatedRestTime > 0 ? accumulatedRestTime : breakDuration;
+  const displayBreakDuration = breakDuration + accumulatedRestTime;
   // Next accumulated rest if they skip again
-  const nextAccumulatedRest = accumulatedRestTime > 0 
-    ? accumulatedRestTime + 5 
-    : breakDuration;
+  const nextAccumulatedRest = breakDuration + accumulatedRestTime + breakDuration;
 
   const handleKeepWorkingClick = () => {
     if (skippedBreaksCount > 0) {
