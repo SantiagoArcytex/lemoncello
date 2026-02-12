@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Zap, Play, Phone } from 'lucide-react';
+import { getRandomPhrase } from '@/lib/lemonPhrases';
 import { Button } from '@/components/ui/button';
 import { DraggableBlockCard } from './DraggableBlockCard';
 import { CreateBlockModal } from './CreateBlockModal';
@@ -37,6 +38,7 @@ export function BlockLibrary({
   onStopMinimized,
 }: BlockLibraryProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const headerPhrase = useMemo(() => getRandomPhrase(), []);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -74,7 +76,7 @@ export function BlockLibrary({
             <Zap className="h-8 w-8 stroke-animated" />
             <h1 className="text-3xl font-bold text-gradient-stroke">Lemoncello</h1>
           </div>
-          <p className="text-muted-foreground">Take your shots, one at a time 🍋</p>
+          <p className="text-muted-foreground">{headerPhrase}</p>
         </div>
 
         {/* Today's Stats */}
