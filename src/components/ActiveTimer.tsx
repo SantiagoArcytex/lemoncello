@@ -1,7 +1,17 @@
 import { motion } from 'framer-motion';
-import { Play, Pause, Square, X, Minimize2, Pencil, Check } from 'lucide-react';
+import { Play, Pause, Square, X, Minimize2, Pencil, Check, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { TimerRing } from './TimerRing';
 import { TimerState, TimerBlock } from '@/types/blocks';
 import { useState, useMemo } from 'react';
@@ -18,6 +28,7 @@ interface ActiveTimerProps {
   onUpdateDescription: (desc: string) => void;
   onUpdateTitle: (title: string) => void;
   onUpdateIcon: (icon: string) => void;
+  onSkipBreak?: () => void;
 }
 
 function formatTime(seconds: number): string {
@@ -69,10 +80,12 @@ export function ActiveTimer({
   onUpdateDescription,
   onUpdateTitle,
   onUpdateIcon,
+  onSkipBreak,
 }: ActiveTimerProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const [isEditingIcon, setIsEditingIcon] = useState(false);
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const phrase = useMemo(() => getRandomPhrase(), [timerState.currentCycle, timerState.isWorkPhase]);
 
   if (!timerState.currentBlock) return null;
@@ -259,6 +272,25 @@ export function ActiveTimer({
         </Button>
       </motion.div>
 
+      {/* Skip Break Button - shown during break phase */}
+      {!timerState.isWorkPhase && onSkipBreak && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35 }}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSkipConfirm(true)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <SkipForward className="h-4 w-4 mr-2" />
+            I'm ready, let's go!
+          </Button>
+        </motion.div>
+      )}
+
       {/* Work Description */}
       {(block.type === 'pomodoro' || block.type === 'meeting') && timerState.isWorkPhase && (
         <motion.div
@@ -278,6 +310,35 @@ export function ActiveTimer({
           />
         </motion.div>
       )}
+
+      {/* Skip Break Confirmation */}
+      <AlertDialog open={showSkipConfirm} onOpenChange={setShowSkipConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-xl">
+              You should rest! 🍋
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-base">
+              Breaks help you stay sharp and focused. Are you sure you're ready for the next shot?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <AlertDialogCancel className="w-full">
+              Keep resting
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowSkipConfirm(false);
+                onSkipBreak?.();
+              }}
+              className="w-full"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Start next shot!
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }
